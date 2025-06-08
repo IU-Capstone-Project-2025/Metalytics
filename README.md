@@ -9,8 +9,8 @@
 
 ## 📌 Overview
 
-The project idea is to develop an analytical system for forecasting the prices of specific metals traded on the MOEX or the Tinkoff Exchange.  
-The focus will be on 2–3 metals and basic price prediction.  
+The project idea is to develop an analytical system for forecasting the prices of specific metals traded on the Russian financial market.  
+The project will incorporate study of modern approaches of precious metal price forecasting and trends to propose a set of instruments suitable for market analysis of specific metal types.  
 Additionally, the system will generate reports explaining price fluctuations and potential market volatility based on news, sanctions, macroeconomic indicators, and other external factors.
 
 ---
@@ -59,10 +59,10 @@ _Coming soon_
 
 |       **Name**       |         **Role**          |              **Responsibilities**               |      **Email**      |
 |:--------------------:|:-------------------------:|:-----------------------------------------------:|:--------------------------:|
-| Ilya Grigorev        | ML Engineer               | Data filtrations + baseline models & ML team coordination |         il.grigorev@innopolis.university                 |
-| Farit Sharafutdinov  | ML Engineer               | Collecting price and volume data, minimal feature data     |                          |
-| Rail Sharipov        | ML Engineer               | Data exploration                                 |                          |
-| Askar Kadyrgulov     | Backend Developer         | DataHub exploration & scraping                   |            a.kadyrgulov@innopolis.university              |
+| Ilya Grigorev        | ML Engineer               | R&D, Filtration design, Model Selection, and ML team coordination |         il.grigorev@innopolis.university                 |
+| Farit Sharafutdinov  | ML Engineer               | Data collection, preprocessing, and delivery     |                          |
+| Rail Sharipov        | ML Engineer               | R&D, Explaratory data analysis, and feature engineering                                 |                          |
+| Askar Kadyrgulov     | Backend Developer         | Development and Operations for backend and ML, scraping functionality                   |            a.kadyrgulov@innopolis.university              |
 | Nikita Solomennikov  | Designer                  | Creating design for frontend                     |              n.solomennikov@innopolis.unisersity            |
 | Emil Shanayev        | Report Coordinator        | Report writing help                              |         None              |
 | Vladimir Toporkov    | Frontend Developer / Team Lead | Frontend development, team coordination       |               v.toporkov@innopolis.university           |

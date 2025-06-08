@@ -61,7 +61,7 @@ _Coming soon_
 |:--------------------:|:-------------------------:|:-----------------------------------------------:|:--------------------------:|
 | Ilya Grigorev        | ML Engineer               | R&D, Filtration design, Model Selection, and ML team coordination |         il.grigorev@innopolis.university                 |
 | Farit Sharafutdinov  | ML Engineer               | Data collection, preprocessing, and delivery     |           f.sharafutdinov@innopolis.university               |
-| Rail Sharipov        | ML Engineer               | R&D, Explaratory data analysis, and feature engineering                                 |                          |
+| Rail Sharipov        | ML Engineer               | R&D, Explaratory data analysis, and feature engineering                                 |            ra.sharipov@innopolis.university              |
 | Askar Kadyrgulov     | Backend Developer         | Development and Operations for backend and ML, scraping functionality                   |            a.kadyrgulov@innopolis.university              |
 | Nikita Solomennikov  | Designer                  | Creating design for frontend                     |              n.solomennikov@innopolis.unisersity            |
 | Emil Shanayev        | Report Coordinator        | Report writing help                              |         None              |

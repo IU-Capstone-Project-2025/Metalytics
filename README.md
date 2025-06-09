@@ -75,6 +75,28 @@ This will:
 - Start the **FastAPI backend** at [http://localhost:8000](http://localhost:8000)
 - Start the **Frontend** at [http://localhost:3000](http://localhost:3000)
 
+#### 📋 Managing the Container
+
+To view logs from the running container:
+```bash
+docker compose logs -f
+```
+
+To stop the container without removing it:
+```bash
+docker compose stop
+```
+
+To stop and remove the container:
+```bash
+docker compose down
+```
+
+To rebuild the image after making changes to the code:
+```bash
+docker compose up -d --build
+```
+
 ### 🛠 Alternative — Run Manually (Without Docker)
 - Clone the repository (follow step 1).
 - Make sure you are in the project root folder.

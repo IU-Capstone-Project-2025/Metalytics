@@ -35,10 +35,9 @@ _To be added soon_
 
 ## 📁 Folder Structure
 
-(May be changed)
 ```
 Metalytics/
-├── frontend/           # Client-side application (static HTML/CSS/JS)
+├── frontend/           # Client-side application
 ├── backend/            # Server-side logic and API handling
 ├── ml/                 # Machine learning models, training, and inference scripts
 ├── docker-compose.yml  # Orchestration file for running all services together

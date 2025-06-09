@@ -50,7 +50,45 @@ Metalytics/
 
 ## 🔥 Getting Started
 
-_Coming soon_
+Follow the steps below to run the project locally using Docker or manually.
+
+### ⚙️ Prerequisites
+
+- [Docker](https://www.docker.com/products/docker-desktop) installed and running
+- Python 3.10+
+- (Optional) Live server if running without Docker
+
+### 📥 Step 1 — Clone the Repository
+
+In your terminal:
+
+```bash
+git clone https://github.com/IU-Capstone-Project-2025/Metalytics.git
+cd Metalytics
+```
+
+### 💻 Step 2 — Run with Docker (Recommended)
+
+```bash
+docker-compose up --build
+```
+This will:
+- Start the **FastAPI backend** at [http://localhost:8000](http://localhost:8000)
+- Start the **Frontend** at [http://localhost:3000](http://localhost:3000)
+
+### 🛠 Alternative — Run Manually (Without Docker)
+- Clone the repository (follow step 1).
+- Make sure you are in the project root folder.
+- Follow the steps bellow.
+
+#### ▶️ Backend (FastAPI)
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+#### 🌐 Frontend
+Open frontend/index.html directly in your browser or use a local server (ex. "Live Server" in VS Code)
 
 ---
 

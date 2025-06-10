@@ -27,11 +27,17 @@ Additionally, the system will generate reports explaining price fluctuations and
 
 ---
 
- ## 🚀 Tech Stack
+## 🚀 Tech Stack
 
-_To be added soon_
-
----
+| Category       | Tools / Libraries                              | Why we chose them                             |
+|----------------|------------------------------------------------|-----------------------------------------------|
+| ML / Baseline  | scikit-learn                                 | Lightweight, well-documented, great for fast prototyping |
+| Deep Learning  | Keras, TensorFlow, PyTorch, Theano     | For advanced modeling |
+| Metaheuristics | DEAP, scikit-opt, pyswarmpackage         | For experimenting with alternative optimizers |
+| Backend        | FastAPI                                      | Fast, modern, built-in OpenAPI docs           |
+| Frontend       | HTML, CSS, JavaScript                    | Simple static frontend |
+| Data Processing| pandas, NumPy                              | Standard tools for loading and transforming data |
+| Infrastructure | Docker, docker-compose                     | Reproducibility, unified local setup          |
 
 ## 📁 Folder Structure
 

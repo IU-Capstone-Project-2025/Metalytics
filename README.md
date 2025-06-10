@@ -129,7 +129,6 @@ Open frontend/index.html directly in your browser or use a local server (ex. "Li
 | Rail Sharipov        | ML Engineer               | R&D, Explaratory data analysis, and feature engineering                                 |            ra.sharipov@innopolis.university              |
 | Askar Kadyrgulov     | Backend Developer         | Development and Operations for backend and ML, scraping functionality                   |            a.kadyrgulov@innopolis.university              |
 | Nikita Solomennikov  | Designer                  | Creating design for frontend                     |              n.solomennikov@innopolis.unisersity            |
-| Emil Shanayev        | Report Coordinator        | Report writing help                              |         None              |
 | Vladimir Toporkov    | Frontend Developer / Team Lead | Frontend development, team coordination       |               v.toporkov@innopolis.university           |
 
 ---

@@ -27,18 +27,23 @@ Additionally, the system will generate reports explaining price fluctuations and
 
 ---
 
- ## 🚀 Tech Stack
+## 🚀 Tech Stack
 
-_To be added soon_
-
----
+| Category       | Tools / Libraries                              | Why we chose them                             |
+|----------------|------------------------------------------------|-----------------------------------------------|
+| ML / Baseline  | scikit-learn                                 | Lightweight, well-documented, great for fast prototyping |
+| Deep Learning  | Keras, TensorFlow, PyTorch, Theano     | For advanced modeling |
+| Metaheuristics | DEAP, scikit-opt, pyswarmpackage         | For experimenting with alternative optimizers |
+| Backend        | FastAPI                                      | Fast, modern, built-in OpenAPI docs           |
+| Frontend       | HTML, CSS, JavaScript                    | Simple static frontend |
+| Data Processing| pandas, NumPy                              | Standard tools for loading and transforming data |
+| Infrastructure | Docker, docker-compose                     | Reproducibility, unified local setup          |
 
 ## 📁 Folder Structure
 
-(May be changed)
 ```
 Metalytics/
-├── frontend/           # Client-side application (static HTML/CSS/JS)
+├── frontend/           # Client-side application
 ├── backend/            # Server-side logic and API handling
 ├── ml/                 # Machine learning models, training, and inference scripts
 ├── docker-compose.yml  # Orchestration file for running all services together
@@ -50,7 +55,67 @@ Metalytics/
 
 ## 🔥 Getting Started
 
-_Coming soon_
+Follow the steps below to run the project locally using Docker or manually.
+
+### ⚙️ Prerequisites
+
+- [Docker](https://www.docker.com/products/docker-desktop) installed and running
+- Python 3.10+
+- (Optional) Live server if running without Docker
+
+### 📥 Step 1 — Clone the Repository
+
+In your terminal:
+
+```bash
+git clone https://github.com/IU-Capstone-Project-2025/Metalytics.git
+cd Metalytics
+```
+
+### 💻 Step 2 — Run with Docker (Recommended)
+
+```bash
+docker-compose up --build
+```
+This will:
+- Start the **FastAPI backend** at [http://localhost:8000](http://localhost:8000)
+- Start the **Frontend** at [http://localhost:3000](http://localhost:3000)
+
+#### 📋 Managing the Container
+
+To view logs from the running container:
+```bash
+docker compose logs -f
+```
+
+To stop the container without removing it:
+```bash
+docker compose stop
+```
+
+To stop and remove the container:
+```bash
+docker compose down
+```
+
+To rebuild the image after making changes to the code:
+```bash
+docker compose up -d --build
+```
+
+### 🛠 Alternative — Run Manually (Without Docker)
+- Clone the repository (follow step 1).
+- Make sure you are in the project root folder.
+- Follow the steps bellow.
+
+#### ▶️ Backend (FastAPI)
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+#### 🌐 Frontend
+Open frontend/index.html directly in your browser or use a local server (ex. "Live Server" in VS Code)
 
 ---
 
@@ -64,7 +129,6 @@ _Coming soon_
 | Rail Sharipov        | ML Engineer               | R&D, Explaratory data analysis, and feature engineering                                 |            ra.sharipov@innopolis.university              |
 | Askar Kadyrgulov     | Backend Developer         | Development and Operations for backend and ML, scraping functionality                   |            a.kadyrgulov@innopolis.university              |
 | Nikita Solomennikov  | Designer                  | Creating design for frontend                     |              n.solomennikov@innopolis.unisersity            |
-| Emil Shanayev        | Report Coordinator        | Report writing help                              |         None              |
 | Vladimir Toporkov    | Frontend Developer / Team Lead | Frontend development, team coordination       |               v.toporkov@innopolis.university           |
 
 ---

@@ -135,7 +135,7 @@ Open frontend/index.html directly in your browser or use a local server (ex. "Li
 
 ## 📈 Roadmap
 
-- [ ] Project structure setup
+- [✓] Project structure setup
 - [ ] Frontend and backend boilerplates
 - [ ] Data collection and preprocessing
 - [ ] ML baseline model

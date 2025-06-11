@@ -21,6 +21,7 @@ Additionally, the system will generate reports explaining price fluctuations and
 - [🚀 Tech Stack](#-tech-stack)
 - [📁 Folder Structure](#-folder-structure)
 - [🔥 Getting Started](#-getting-started)
+- [📍 Waypoints](#-waypoints)
 - [👥 Team](#-team)
 - [📈 Roadmap](#-roadmap)
 - [📝 License](#-license)
@@ -118,6 +119,17 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 Open frontend/index.html directly in your browser or use a local server (ex. "Live Server" in VS Code)
 
 ---
+
+## 📍 Waypoints
+
+| Method | Endpoint                    | Function                                                              |
+| -----  | --------------------------- | --------------------------------------------------------------------- |
+| GET    | /metals                     | Get a list of available metals (["gold", "nickel", "aluminum"])       |
+| GET    | /forecast/{metal}           | Get a metal price forecast                                            |
+| GET    | /forecast/{metal}?days=30   | Forecast for N days ahead                                             |
+| GET    | /health    | Checking if the backend is working          |
+| GET    | /version   | API/model version                           |
+| GET    | /logs      | Output of logs (for debugging, if required) |
 
 ## 👥 Team
 

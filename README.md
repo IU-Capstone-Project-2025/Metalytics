@@ -127,9 +127,6 @@ Open frontend/index.html directly in your browser or use a local server (ex. "Li
 | GET    | /metals                     | Get a list of available metals (["gold", "nickel", "aluminum"])       |
 | GET    | /forecast/{metal}           | Get a metal price forecast                                            |
 | GET    | /forecast/{metal}?days=30   | Forecast for N days ahead                                             |
-
-| Method | Endpoint   | Function                                    |
-| -----  | ---------- | ------------------------------------------- |
 | GET    | /health    | Checking if the backend is working          |
 | GET    | /version   | API/model version                           |
 | GET    | /logs      | Output of logs (for debugging, if required) |

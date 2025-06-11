@@ -126,14 +126,13 @@ Open frontend/index.html directly in your browser or use a local server (ex. "Li
 | -----  | --------------------------- | --------------------------------------------------------------------- |
 | GET    | /metals                     | Get a list of available metals (["gold", "nickel", "aluminum"])       |
 | GET    | /forecast/{metal_id}        | Get a metal price forecast                                            |
-| GET    | /forecast/{metal_id}?days=30| Forecast for N days ahead                                             |
+| GET    | /forecast/{metal_id}/days   | Forecast for N days ahead                                             |
 | GET    | /health                     | Checking if the backend is working                                    |
 | GET    | /version                    | API/model version                                                     |
 | GET    | /logs                       | Output of logs (for debugging, if required)                           |
 | POST   | /users/alerts               | Create an alert (e.g. the metal price will rise in the near future)   |
 | GET    | /users/alerts               | List of active alerts                                                 |
 | DELETE | /users/alerts/{alert_id}    | Remove alert                                                          |
-
 
 ## 👥 Team
 

@@ -53,6 +53,6 @@ def get_version():
 @app.get("/logs")
 def get_logs():
     '''
-        Output of logs (for debugging, if required)
+        Output of logs (for debugging)
     '''
     return{"message":"Hello world"}

@@ -46,13 +46,20 @@ def health_check():
 @app.get("/version")
 def get_version():
     '''
-        Returns current API and module versions
+    Returns current API and module versions
     '''
-    return{"message":"Hello world"}
+    return {
+        "api_version": "0.1.0",
+        "module_versions": {
+            "pandas": "N/A",
+            "scikit-learn": "N/A",
+            "numpy": "N/A"
+        }
+    }
 
 @app.get("/logs")
 def get_logs():
     '''
-        Output of logs (for debugging)
+        Output of logs
     '''
     return{"message":"Hello world"}

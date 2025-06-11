@@ -1,17 +1,22 @@
-## Скрипты
-- `fetch_gold_ohlcv.py`: Скрипт для сбора данных OHLCV (Open, High, Low, Close, Volume)
-- `calculate_indicators.py`: Скрипт для вычисления технических индикаторов (EMA20, RSI14, ATR14, MACD) на основе собранных данных.
+## Scripts
+- `fetch_gold_ohlcv.py`: script for collecting OHLCV data (Open, High, Low, Close, Volume).
+- `calculate_indicators.py`: script for calculating indicators (EMA20, RSI14, ATR14, MACD) based on the collected data.
 
-## Инструкция по установке модулей
-1. Убедитесь, что у вас установлен Python 3.7 или выше.
-2. Установите необходимые библиотеки с помощью pip: 
+### Dependecies Installation
+1. Prerequisite version of Python >= 3.7.
+2. Dependencies installation via pip: 
 `pip install pandas yfinance ta`
-3. Проверьте установку, запустив Python и импортировав библиотеки: 
-`import pandas`
-`import yfinance`
-`import ta`
-Если ошибок нет, установка прошла успешно.
+3. Validate the installation by running the following commands in Python:
+```
+import pandas
+import yfinance
+import ta
+```
 
-## Использование
-1. Запустите `fetch_gold_ohlcv.py` для сбора данных в файл `gold_futures_yahoo_1h.csv`.
-2. Запустите `calculate_indicators.py` для добавления индикаторов в файл `gold_futures_with_indicators.csv`.
+### Usage
+1. Run `fetch_gold_ohlcv.py` for collecting data into `gold_futures_yahoo_1h.csv`.
+2. Run `calculate_indicators.py` for adding indicators and saving into `gold_futures_with_indicators.csv`.
+
+## Jupyter Notebooks
+Jupyter notebooks contain data exploration, task-specific analysis, and model selection. The following notebooks are uploaded:
+- `01_filter_design.ipynb`: data visual analysis, baseline model implementation, and filtration design.

@@ -29,7 +29,7 @@ def metal_forecast(metal_id: str):
     return {"message":"Hello world"}
 
 
-@app.get("/forecast/{metal_id}?days=30")
+@app.get("/forecast/{metal_id}/days")
 def metal_forcast_N_days(metal_id: str, num_days: int):
     '''
         Get prices for N days ahead

@@ -1,17 +1,16 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from datetime import datetime
-from typing import Dict, Any
+from datetime import datetime, timezone
+from typing import Dict, Any, Optional
 import os
-import psutil 
+import psutil
+import pkg_resources
 import fastapi
 import uvicorn
 import numpy
 import sklearn
 import pandas
-import pkg_resources
-
 
 
 app = FastAPI()
@@ -23,6 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_system_metrics() -> Dict[str, Any]:
     """Optional function to gather system metrics"""
     try:
@@ -31,12 +31,14 @@ def get_system_metrics() -> Dict[str, Any]:
             "memory_usage": psutil.virtual_memory().percent,
             "disk_usage": psutil.disk_usage('/').percent,
         }
-    except:
+    except Exception:
         return {"error": "Could not gather system metrics"}
+
 
 @app.get("/")
 def read_root():
     return {"message": "Hello!"}
+
 
 @app.get("/metals")
 def metals_check():
@@ -51,7 +53,7 @@ def metal_forecast(metal_id: str):
     '''
         Get a metal price forecast
     '''
-    return {"message":"Hello world"}
+    return {"message": "Hello world"}
 
 
 @app.get("/forecast/{metal_id}/days")
@@ -59,34 +61,35 @@ def metal_forcast_N_days(metal_id: str, num_days: int):
     '''
         Get prices for N days ahead
     '''
-    return {"message":"Hello world"}
+    return {"message": "Hello world"}
+
 
 @app.get("/health")
-def health_check() -> JSONResponse:
+def health_check(
+    include_system_metrics: Optional[bool] = Query(False),
+    include_env: Optional[bool] = Query(False)
+) -> Dict[str, Any]:
     '''
         Health check endpoint to verify that backend is running
     '''
-    include_system_metrics: bool = False,
-    include_env: bool = False
-
-    """Endpoint to check the status of the website/service"""
-    
     status_info = {
         "status": "OK",
-        "timestamp": datetime.now(datetime.timezone.utc).isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "service": "Metalytics",
-        "version": "1.0.0",  # Could be read from environment or config
+        "version": "1.0.0",
     }
-    
+
     if include_system_metrics:
         status_info["system"] = get_system_metrics()
-    
+
     if include_env:
-        # Be careful with this in production - don't expose sensitive variables
-        status_info["environment"] = {k: v for k, v in os.environ.items() 
-                                    if not k.startswith(('SECRET', 'PASSWORD', 'KEY'))}
-    
-    return JSONResponse(content=status_info)
+        status_info["environment"] = {
+            k: v for k, v in os.environ.items()
+            if not k.upper().startswith(("SECRET", "PASSWORD", "KEY"))
+        }
+
+    return status_info
+
 
 @app.get("/version")
 def get_version():
@@ -101,7 +104,7 @@ def get_version():
             "numpy": get_package_version("numpy"),
             "scikit-learn": get_package_version("scikit-learn"),
             "pandas": get_package_version("pandas"),
-            "docker": get_package_version("docker")
+            "docker": get_package_version("docker"),
         }
     }
 
@@ -111,9 +114,10 @@ def get_logs():
     '''
         Output of logs
     '''
-    return{"message":"Hello world"}
+    return {"message": "Hello world"}
 
-def get_package_version(package_name):
+
+def get_package_version(package_name: str) -> str:
     try:
         return pkg_resources.get_distribution(package_name).version
     except Exception:

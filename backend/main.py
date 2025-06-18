@@ -1,5 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import fastapi
+import uvicorn
+import numpy
+import sklearn
+import pandas
+import pkg_resources
+
+
 
 app = FastAPI()
 
@@ -11,18 +19,19 @@ app.add_middleware(
 )
 
 @app.get("/")
-async def read_root():
+def read_root():
     return {"message": "Hello!"}
 
 @app.get("/metals")
-async def metals_check():
+def metals_check():
     '''
-        Get a list of available metals (["gold", "nickel", "aluminum"])
+        Get a list of available metals (["gold"])
     '''
-    return {"message":"Hello world"}
+    return {"available_metals": ["gold"]}
+
 
 @app.get("/forecast/{metal_id}")
-async def metal_forecast(metal_id: str):
+def metal_forecast(metal_id: str):
     '''
         Get a metal price forecast
     '''
@@ -30,36 +39,46 @@ async def metal_forecast(metal_id: str):
 
 
 @app.get("/forecast/{metal_id}/days")
-async def metal_forcast_N_days(metal_id: str, num_days: int):
+def metal_forcast_N_days(metal_id: str, num_days: int):
     '''
         Get prices for N days ahead
     '''
     return {"message":"Hello world"}
 
 @app.get("/health")
-async def health_check():
+def health_check():
     '''
         Health check endpoint to verify that backend is running
     '''
-    return{"message":"Hello world"}
+    return{"backend status":"OK"}
 
 @app.get("/version")
-async def get_version():
-    '''
+def get_version():
+    """
     Returns current API and module versions
-    '''
+    """
     return {
         "api_version": "0.1.0",
         "module_versions": {
-            "pandas": "N/A",
-            "scikit-learn": "N/A",
-            "numpy": "N/A"
+            "fastapi": get_package_version("fastapi"),
+            "uvicorn": get_package_version("uvicorn"),
+            "numpy": get_package_version("numpy"),
+            "scikit-learn": get_package_version("scikit-learn"),
+            "pandas": get_package_version("pandas"),
+            "docker": get_package_version("docker")
         }
     }
 
+
 @app.get("/logs")
-async def get_logs():
+def get_logs():
     '''
         Output of logs
     '''
     return{"message":"Hello world"}
+
+def get_package_version(package_name):
+    try:
+        return pkg_resources.get_distribution(package_name).version
+    except Exception:
+        return "N/A"

@@ -36,12 +36,12 @@ def get_system_metrics() -> Dict[str, Any]:
 
 
 @app.get("/")
-def read_root():
+async def read_root():
     return {"message": "Hello!"}
 
 
 @app.get("/metals")
-def metals_check():
+async def metals_check():
     '''
         Get a list of available metals (["gold"])
     '''
@@ -49,7 +49,7 @@ def metals_check():
 
 
 @app.get("/forecast/{metal_id}")
-def metal_forecast(metal_id: str):
+async def metal_forecast(metal_id: str):
     '''
         Get a metal price forecast
     '''
@@ -57,7 +57,7 @@ def metal_forecast(metal_id: str):
 
 
 @app.get("/forecast/{metal_id}/days")
-def metal_forcast_N_days(metal_id: str, num_days: int):
+async def metal_forcast_N_days(metal_id: str, num_days: int):
     '''
         Get prices for N days ahead
     '''
@@ -65,7 +65,7 @@ def metal_forcast_N_days(metal_id: str, num_days: int):
 
 
 @app.get("/health")
-def health_check(
+async def health_check(
     include_system_metrics: Optional[bool] = Query(False),
     include_env: Optional[bool] = Query(False)
 ) -> Dict[str, Any]:
@@ -92,7 +92,7 @@ def health_check(
 
 
 @app.get("/version")
-def get_version():
+async def get_version():
     """
     Returns current API and module versions
     """
@@ -110,7 +110,7 @@ def get_version():
 
 
 @app.get("/logs")
-def get_logs():
+async def get_logs():
     '''
         Output of logs
     '''

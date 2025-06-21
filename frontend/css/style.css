@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
 :root {
     --black: #000;
     --white: #fff;
@@ -20,7 +22,8 @@ html {
 body {
 	min-width: 320px;
 	height: 100vh;
-	font-family: sans-serif;
+    margin: 0;
+	font-family: "Inria Sans" ,sans-serif;
 	overflow-x: hidden;
 	background-color: var(--dark);
 	line-height: 1.1;
@@ -74,10 +77,11 @@ span {
 /* Header */
 
 .header {
-    padding-top: 8px;
+    padding-top: 4px;
 }
 
 .header__logo {
+    margin-top: 11px;
     align-items: center;
 }
 
@@ -98,10 +102,10 @@ span {
 
 .header__title {
     margin: 0 auto;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     font-size: 48px;
     color: var(--main);
-    letter-spacing: -0.7px;
+    letter-spacing: -0.4px;
 }
 
 .header__item:not(:last-child) {

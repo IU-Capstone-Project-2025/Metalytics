@@ -5,3 +5,7 @@ scikit-learn
 pandas
 docker
 psutil
+ta
+joblib
+statsmodels
+xgboost

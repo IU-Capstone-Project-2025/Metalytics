@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
+import yfinance as yf
 import os
 import psutil
 import pkg_resources
@@ -22,7 +23,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 def get_system_metrics() -> Dict[str, Any]:
     """Optional function to gather system metrics"""
     try:
@@ -34,6 +34,10 @@ def get_system_metrics() -> Dict[str, Any]:
     except Exception:
         return {"error": "Could not gather system metrics"}
 
+# Create a Ticker object
+Metal_dict = {
+    "Gold": "GC=F",
+}
 
 @app.get("/")
 async def read_root():
@@ -46,6 +50,49 @@ async def metals_check():
         Get a list of available metals (["gold"])
     '''
     return {"available_metals": ["gold"]}
+
+@app.get("/metals/histprical_data")
+async def metal_historical_data(metal_id: str, period: str, interval = "1d"):
+    '''
+        Get a historical data. 
+        - metal_id: Metal name - e.g. "Gold"
+        - period: Time period - [“1d”, “5d”, “1mo”, “3mo”, “6mo”, “1y”, “2y”, “5y”, “10y”, “ytd”, “max”]. 
+        - interval: Data interval - [“1m”, “2m”, “5m”, “15m”, “30m”, “60m”, “90m”, “1h”, “1d”, “5d”, “1wk”, “1mo”, “3mo”]
+    '''
+    try:
+        # Fetch metal data
+        ticker_symbol = Metal_dict[metal_id]
+        metal = yf.Ticker(ticker_symbol)
+        
+        # Get historical data
+        hist = metal.history(
+            period=period,
+            interval=interval
+        )
+        
+        if hist.empty:
+            raise HTTPException(status_code=404, detail="No data found for the given parameters")
+
+        # Convert DataFrame to dictionary
+        hist_data = hist.to_dict(orient="index")
+
+        formatted_data = []
+        for date, row in hist.iterrows():
+            # Convert numpy.float64 to native Python float
+            formatted_data.append({
+                "timestamp": date.isoformat() + "Z",
+                "open": float(row["Open"]),
+                "high": float(row["High"]),
+                "low": float(row["Low"]),
+                "close": float(row["Close"]),
+                "volume": int(row["Volume"])
+            })
+
+        return formatted_data
+    
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
 
 
 @app.get("/forecast/{metal_id}")
@@ -122,3 +169,7 @@ def get_package_version(package_name: str) -> str:
         return pkg_resources.get_distribution(package_name).version
     except Exception:
         return "N/A"
+
+# # delete it before push
+# if __name__ == "__main__":
+#     uvicorn.run("main:app")

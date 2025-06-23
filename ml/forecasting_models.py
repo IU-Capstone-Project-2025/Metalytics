@@ -12,6 +12,7 @@ from xgboost import XGBRegressor
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
 from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.models import load_model
 
 class ForecastModel(ABC):
     """
@@ -514,7 +515,10 @@ class ClosePriceFM(ForecastModel):
 
 
 class LSTMCloseFM(ForecastModel):
-    def __init__(self, lag=24):
+    def __init__(self, lag=24, prediction_mode='original'):
+        if prediction_mode not in ['original', 'diff']:
+            raise ValueError("prediction_mode must be 'original' or 'diff'")
+        self.prediction_mode = prediction_mode
         self.lag = lag
         self.model = self._build_model()
         self.scaler = MinMaxScaler()
@@ -551,11 +555,11 @@ class LSTMCloseFM(ForecastModel):
         data = data.bfill().ffill()  # filling in the gaps
 
         data_scaled = self.scaler.fit_transform(data)
-        X, y = [], []
-        for i in range(len(data_scaled) - self.lag - 1):
-            X.append(data_scaled[i:i+self.lag])
-            y.append(data_scaled[i+self.lag, 0])
-        return np.array(X), np.array(y)
+        X = sliding_window_view(data_scaled, window_shape=self.lag, axis=0)
+        X = X[:-1] 
+        y = data_scaled[self.lag:, 0]  
+    
+        return X, y
 
     def fit(self, df: pd.DataFrame, epochs=50, patience=10):
         self.build(df)
@@ -597,7 +601,9 @@ class LSTMCloseFM(ForecastModel):
         dummy = np.zeros((len(predictions), len(self.feature_names)))
         dummy[:, 0] = predictions
         predicted_close = self.scaler.inverse_transform(dummy)[:, 0]
-        
+    
+        if self.prediction_mode == 'diff':
+            predicted_close = np.cumsum(predicted_close) + self.last_close_price
         # cumulative sum to the last price (if diff)
         return pd.Series(predicted_close, index=date_range)
 
@@ -607,7 +613,6 @@ class LSTMCloseFM(ForecastModel):
 
     def load(self, df: pd.DataFrame, path: str):
         self.df_ = self.build(df.copy())
-        from tensorflow.keras.models import load_model
         self.model = load_model(f"{path}/LSTM_Close_model.h5")
         self.scaler = joblib.load(f"{path}/LSTM_Close_scaler.pkl")
 

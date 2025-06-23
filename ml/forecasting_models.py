@@ -509,3 +509,103 @@ class ClosePriceFM(ForecastModel):
         self.model_ = joblib.load(f"{path}/Close_predictor.joblib")
         for model in self.feature_models.values():
             model.load(df, path)
+
+
+class LSTMCloseFM(ForecastModel):
+    def __init__(self, lag=24):
+        self.lag = lag
+        self.model = self._build_model()
+        self.scaler = MinMaxScaler()
+        self.df_: pd.DataFrame = None
+        self.last_close_price: float = None
+        self.feature_names = [
+            'Close', 'High', 'Low', 'Volume', 
+            'EMA20', 'RSI14', 'ATR14',
+            'MACD', 'MACD_Signal', 'MACD_Hist'
+        ]
+        
+    def _build_model(self):
+        model = Sequential([
+            Input(shape=(self.lag, len(self.feature_names))),
+            LSTM(128, return_sequences=True),
+            Dropout(0.3),
+            LSTM(64),
+            Dense(32, activation='relu'),
+            Dense(1)
+        ])
+        model.compile(optimizer='adam', loss='mse')
+        return model
+
+    def build(self, df: pd.DataFrame):
+        self.last_close_price = df.iloc[-1]['Close']
+        self.df_ = df.copy()
+        return self.df_
+
+    def build_forecast_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        return df  # df already has all necessary features.
+    
+    def _prepare_data(self, df):
+        data = df[self.feature_names].copy()
+        data = data.bfill().ffill()  # filling in the gaps
+
+        data_scaled = self.scaler.fit_transform(data)
+        X, y = [], []
+        for i in range(len(data_scaled) - self.lag - 1):
+            X.append(data_scaled[i:i+self.lag])
+            y.append(data_scaled[i+self.lag, 0])
+        return np.array(X), np.array(y)
+
+    def fit(self, df: pd.DataFrame, epochs=50, patience=10):
+        self.build(df)
+        X, y = self._prepare_data(self.df_)
+        
+        val_size = int(len(X) * 0.1)
+        X_train, y_train = X[:-val_size], y[:-val_size]
+        X_val, y_val = X[-val_size:], y[-val_size:]
+        
+        self.model.fit(
+            X_train, y_train,
+            validation_data=(X_val, y_val),
+            epochs=epochs,
+            batch_size=64,
+            callbacks=[EarlyStopping(patience=patience, restore_best_weights=True)],
+            verbose=1
+        )
+        return self
+
+    def predict(self, date_range: pd.DatetimeIndex) -> pd.Series:
+        # start with the last lag lines
+        sequence = self.df_[self.feature_names].copy()
+        sequence = sequence.bfill().ffill()
+        last_sequence = sequence.values[-self.lag:]
+        last_sequence_scaled = self.scaler.transform(last_sequence)
+        
+        predictions = []
+        for _ in date_range:
+            x = last_sequence_scaled.reshape(1, self.lag, -1)
+            pred_scaled = self.model.predict(x, verbose=0)[0][0]
+            
+            # update close only
+            new_row = last_sequence_scaled[-1].copy()
+            new_row[0] = pred_scaled
+            last_sequence_scaled = np.vstack([last_sequence_scaled[1:], new_row])
+            predictions.append(pred_scaled)
+        
+        # denormalization
+        dummy = np.zeros((len(predictions), len(self.feature_names)))
+        dummy[:, 0] = predictions
+        predicted_close = self.scaler.inverse_transform(dummy)[:, 0]
+        
+        # cumulative sum to the last price (if diff)
+        return pd.Series(predicted_close, index=date_range)
+
+    def dump(self, path: str) -> None:
+        self.model.save(f"{path}/LSTM_Close_model.h5")
+        joblib.dump(self.scaler, f"{path}/LSTM_Close_scaler.pkl")
+
+    def load(self, df: pd.DataFrame, path: str):
+        self.df_ = self.build(df.copy())
+        from tensorflow.keras.models import load_model
+        self.model = load_model(f"{path}/LSTM_Close_model.h5")
+        self.scaler = joblib.load(f"{path}/LSTM_Close_scaler.pkl")
+

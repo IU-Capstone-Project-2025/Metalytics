@@ -7,6 +7,7 @@
     --dark: #1A1A1A;
     --main: #D3AC49;
     --swiper: #2A2A2A;
+    --button: #D0D0D0;
 }
 
 html {
@@ -139,13 +140,17 @@ span {
 
 /* Main */
 
+.main {
+    padding-top: 22px;
+}
+
 /* Swiper */
 .swiper {
     width: 91%;
-    height: 95%;
+    height: 100%;
     margin-left: 10px;
     padding-top: 25px;
-    background-color: var(--swiper);
+    background-color: var(--primary);
 }
 
 .swiper-button-next::after, .swiper-button-prev::after {
@@ -204,7 +209,6 @@ span {
 .news {
 	width: 28.3%;
 	min-height: 650px;
-	padding-top: 22px;
 }
 
 .news__info-block {
@@ -245,5 +249,30 @@ span {
 }
 
 /* Graph */
+
+.graph {
+    width: 60%;
+    min-height: 200px;
+    padding: 30px 25px;
+    background-color: var(--primary);
+}
+
+.graph__title {
+    margin-bottom: 50px;
+    text-align: center;
+    font-size: 48px;
+    color: var(--main);
+}
+
+.graph__button {
+	width: 87.4px;
+	min-height: 42px;
+    background-color: var(--swiper);
+	font-weight: 500;
+	font-size: 15px;
+	line-height: 100%;
+	letter-spacing: 0;
+	color: var(--white);
+}
 
 /* Report */

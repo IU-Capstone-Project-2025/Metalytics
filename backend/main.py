@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
+from forecasting_framework import ForecastFramework
 import yfinance as yf
 import os
 import psutil
@@ -11,7 +12,7 @@ import fastapi
 import uvicorn
 import numpy
 import sklearn
-import pandas
+import pandas as pd
 
 
 app = FastAPI()
@@ -34,7 +35,7 @@ def get_system_metrics() -> Dict[str, Any]:
     except Exception:
         return {"error": "Could not gather system metrics"}
 
-# Create a Ticker object
+# Dictionary for metals from name to tags
 Metal_dict = {
     "Gold": "GC=F",
 }
@@ -49,9 +50,9 @@ async def metals_check():
     '''
         Get a list of available metals (["gold"])
     '''
-    return {"available_metals": ["gold"]}
+    return {"available_metals": [key for key in Metal_dict.keys()]}
 
-@app.get("/metals/histprical_data")
+@app.get("/metals/historical_data")
 async def metal_historical_data(metal_id: str, period: str, interval = "1d"):
     '''
         Get a historical data. 
@@ -98,17 +99,89 @@ async def metal_historical_data(metal_id: str, period: str, interval = "1d"):
 @app.get("/forecast/{metal_id}")
 async def metal_forecast(metal_id: str):
     '''
-        Get a metal price forecast
+        Get a metal price forecast for 1 day
+        - metal_id: Metal name - e.g. "Gold"
     '''
-    return {"message": "Hello world"}
+    
+    try:
+
+        if metal_id not in Metal_dict.keys():
+            raise HTTPException(status_code=404, detail="No data found for the given parameters")
+
+        dataframe = pd.read_csv("data/gold_futures_with_indicators.csv", parse_dates=[0], index_col=0)
+
+        
+        # Load existing model
+        path: str = "baseline_model"
+        fm = ForecastFramework.load_from_file(path, dataframe)
+
+        # Create forecast
+        unit = 'h'  # units of time (e.g. 'h' for hour, 'd' for days, 'm' for months)
+        value = 24   # value of units
+
+        # Obtain pandas series with forecasted data
+        forecast = fm.create_forecast(value=value, unit=unit)
+        if forecast.empty:
+            raise HTTPException(status_code=404, detail="No forecast. Something goes wrong")
+
+        formatted_data = []
+        for column_name in forecast.index:
+            time, stamp = str(column_name).split()
+            timestamp = time + "T" + stamp + "Z"
+            price = float(forecast[column_name])
+            formatted_data.append({
+                "timestamp": timestamp,
+                "price": price
+            })
+        
+        return formatted_data
+    
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    
 
 
 @app.get("/forecast/{metal_id}/days")
-async def metal_forcast_N_days(metal_id: str, num_days: int):
+async def metal_forcast_value_of_units(metal_id: str, unit = "h", value = 24):
     '''
-        Get prices for N days ahead
+        Get a metal price forecast for value number of selected unit
+        - metal_id: Metal name - e.g. "Gold"
+        - unit: hour, day or months - ['h', 'd', 'm']
+        - value: value of units
     '''
-    return {"message": "Hello world"}
+    value = int(value)
+    print (f"value: {value}")
+    try:
+        if metal_id not in Metal_dict.keys():
+            raise HTTPException(status_code=404, detail="No data found for the given parameters")
+
+        dataframe = pd.read_csv("data/gold_futures_with_indicators.csv", parse_dates=[0], index_col=0)
+
+        
+        # Load existing model
+        path: str = "baseline_model"
+        fm = ForecastFramework.load_from_file(path, dataframe)
+
+        # Obtain pandas series with forecasted data
+        forecast = fm.create_forecast(value=value, unit=unit)
+        if forecast.empty:
+            raise HTTPException(status_code=404, detail="No forecast. Something goes wrong")
+
+        formatted_data = []
+        for column_name in forecast.index:
+            time, stamp = str(column_name).split()
+            timestamp = time + "T" + stamp + "Z"
+            price = float(forecast[column_name])
+            formatted_data.append({
+                "timestamp": timestamp,
+                "price": price
+            })
+        
+        return formatted_data
+    
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.get("/health")

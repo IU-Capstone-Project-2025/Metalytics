@@ -57,8 +57,8 @@ async def metal_historical_data(metal_id: str, period: str, interval = "1d"):
     '''
         Get a historical data. 
         - metal_id: Metal name - e.g. "Gold"
-        - period: Time period - [“1d”, “5d”, “1mo”, “3mo”, “6mo”, “1y”, “2y”, “5y”, “10y”, “ytd”, “max”]. 
-        - interval: Data interval - [“1m”, “2m”, “5m”, “15m”, “30m”, “60m”, “90m”, “1h”, “1d”, “5d”, “1wk”, “1mo”, “3mo”]
+        - period: Time period - ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]. 
+        - interval: Data interval - ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"]
     '''
     try:
         # Fetch metal data
@@ -74,14 +74,16 @@ async def metal_historical_data(metal_id: str, period: str, interval = "1d"):
         if hist.empty:
             raise HTTPException(status_code=404, detail="No data found for the given parameters")
 
-        # Convert DataFrame to dictionary
         hist_data = hist.to_dict(orient="index")
 
         formatted_data = []
         for date, row in hist.iterrows():
-            # Convert numpy.float64 to native Python float
+            if date.tzinfo is not None:
+                ts = date.tz_convert("UTC").strftime("%Y-%m-%dT%H:%M:%SZ")
+            else:
+                ts = date.strftime("%Y-%m-%dT%H:%M:%SZ")
             formatted_data.append({
-                "timestamp": date.isoformat() + "Z",
+                "timestamp": ts,
                 "open": float(row["Open"]),
                 "high": float(row["High"]),
                 "low": float(row["Low"]),

@@ -252,7 +252,7 @@ span {
 /* Graph */
 
 .graph {
-    width: 60%;
+    width: 70%;
     min-height: 200px;
     padding: 30px 25px;
     background-color: var(--primary);

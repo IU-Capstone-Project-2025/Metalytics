@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const periodToInterval = {
     hour:  "1h",
-    day:   "90m",
+    day:   "1h",
     week:  "1d",
     month: "1wk",
     year:  "1mo"
@@ -70,15 +70,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const periodToPeriodCode = {
     hour:  "1d",
-    day:   "5d",
-    week:  "1mo",
+    day:   "1d",
+    week:  "1wk",
     month: "6mo",
     year:  "1y"
   };
 
-  // Map frontend period keys to API unit and value
   const periodToForecast = {
-    hour:  { unit: "h", value: 24 },
+    hour:  { unit: "m", value: 60 },
     day:   { unit: "h", value: 24 },
     week:  { unit: "d", value: 7 },
     month: { unit: "d", value: 30 },

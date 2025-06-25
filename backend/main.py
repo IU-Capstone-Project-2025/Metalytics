@@ -57,10 +57,20 @@ async def metal_historical_data(metal_id: str, period: str, interval = "1d"):
     '''
         Get a historical data. 
         - metal_id: Metal name - e.g. "Gold"
-        - period: Time period - [“1d”, “5d”, “1mo”, “3mo”, “6mo”, “1y”, “2y”, “5y”, “10y”, “ytd”, “max”]. 
-        - interval: Data interval - [“1m”, “2m”, “5m”, “15m”, “30m”, “60m”, “90m”, “1h”, “1d”, “5d”, “1wk”, “1mo”, “3mo”]
+        - period: Time period - ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]. 
+        - interval: Data interval - ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"]
     '''
     try:
+        # Check input parameters
+        if metal_id not in Metal_dict.keys():
+            raise HTTPException(status_code=404, detail="No matches for this metal")
+
+        if period not in ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]:
+            raise HTTPException(status_code=400, detail="Wrong period parameter")
+
+        if interval not in ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"]:
+            raise HTTPException(status_code=400, detail="Wrong period parameter")
+
         # Fetch metal data
         ticker_symbol = Metal_dict[metal_id]
         metal = yf.Ticker(ticker_symbol)
@@ -75,8 +85,6 @@ async def metal_historical_data(metal_id: str, period: str, interval = "1d"):
             raise HTTPException(status_code=404, detail="No data found for the given parameters")
 
         # Convert DataFrame to dictionary
-        hist_data = hist.to_dict(orient="index")
-
         formatted_data = []
         for date, row in hist.iterrows():
             # Convert numpy.float64 to native Python float
@@ -105,6 +113,7 @@ async def metal_forecast(metal_id: str):
     
     try:
 
+        # Check input parameters
         if metal_id not in Metal_dict.keys():
             raise HTTPException(status_code=404, detail="No data found for the given parameters")
 
@@ -153,11 +162,16 @@ async def metal_forcast_value_of_units(metal_id: str, unit = "h", value = 24):
     value = int(value)
     print (f"value: {value}")
     try:
+
+        # Check input parameters
         if metal_id not in Metal_dict.keys():
             raise HTTPException(status_code=404, detail="No data found for the given parameters")
+        
+        if unit not in ['h', 'd', 'm']:
+            raise HTTPException(status_code=400, detail="Wrong unit parameter")
+        
 
         dataframe = pd.read_csv("data/gold_futures_with_indicators.csv", parse_dates=[0], index_col=0)
-
         
         # Load existing model
         path: str = "baseline_model"
@@ -166,7 +180,7 @@ async def metal_forcast_value_of_units(metal_id: str, unit = "h", value = 24):
         # Obtain pandas series with forecasted data
         forecast = fm.create_forecast(value=value, unit=unit)
         if forecast.empty:
-            raise HTTPException(status_code=404, detail="No forecast. Something goes wrong")
+            raise HTTPException(status_code=404, detail="No forecast. Something went wrong")
 
         formatted_data = []
         for column_name in forecast.index:
@@ -243,6 +257,6 @@ def get_package_version(package_name: str) -> str:
     except Exception:
         return "N/A"
 
-# # delete it before push
-# if __name__ == "__main__":
-#     uvicorn.run("main:app")
+# delete it before push
+if __name__ == "__main__":
+    uvicorn.run("main:app")

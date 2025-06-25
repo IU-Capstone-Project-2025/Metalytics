@@ -102,7 +102,7 @@ async def metal_historical_data(metal_id: str, period: str, interval = "1d"):
                 "close": float(row["Close"]),
                 "volume": int(row["Volume"])
             })
-        
+
         if is_period_1hour:
             pattern = formatted_data[-1]['timestamp'][:13]
 
@@ -274,6 +274,6 @@ def get_package_version(package_name: str) -> str:
     except Exception:
         return "N/A"
 
-# delete it before push
-if __name__ == "__main__":
-    uvicorn.run("main:app")
+# # delete it before push
+# if __name__ == "__main__":
+#     uvicorn.run("main:app")

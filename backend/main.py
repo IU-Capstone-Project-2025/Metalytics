@@ -257,6 +257,6 @@ def get_package_version(package_name: str) -> str:
     except Exception:
         return "N/A"
 
-# delete it before push
-if __name__ == "__main__":
-    uvicorn.run("main:app")
+# # delete it before push
+# if __name__ == "__main__":
+#     uvicorn.run("main:app")

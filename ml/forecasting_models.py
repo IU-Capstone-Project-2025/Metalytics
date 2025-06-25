@@ -520,16 +520,16 @@ class LSTMCloseFM(ForecastModel):
             raise ValueError("prediction_mode must be 'original' or 'diff'")
         self.prediction_mode = prediction_mode
         self.lag = lag
-        self.model = self._build_model()
-        self.scaler = MinMaxScaler()
-        self.df_: pd.DataFrame = None
-        self.last_close_price: float = None
         self.feature_names = [
             'Close', 'High', 'Low', 'Volume', 
             'EMA20', 'RSI14', 'ATR14',
             'MACD', 'MACD_Signal', 'MACD_Hist'
         ]
-        
+        self.model = self._build_model()
+        self.scaler = MinMaxScaler()
+        self.df_: pd.DataFrame = None
+        self.last_close_price: float = None
+
     def _build_model(self):
         model = Sequential([
             Input(shape=(self.lag, len(self.feature_names))),
@@ -555,9 +555,15 @@ class LSTMCloseFM(ForecastModel):
         data = data.bfill().ffill()  # filling in the gaps
 
         data_scaled = self.scaler.fit_transform(data)
-        X = sliding_window_view(data_scaled, window_shape=self.lag, axis=0)
-        X = X[:-1] 
-        y = data_scaled[self.lag:, 0]  
+        
+        # Create sequences with correct shape (samples, timesteps, features)
+        X, y = [], []
+        for i in range(self.lag, len(data_scaled)):
+            X.append(data_scaled[i-self.lag:i])
+            y.append(data_scaled[i, 0])  # Close price is first column
+        
+        X = np.array(X)
+        y = np.array(y)
     
         return X, y
 

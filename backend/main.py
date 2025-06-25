@@ -84,14 +84,12 @@ async def metal_historical_data(metal_id: str, period: str, interval = "1d"):
         if hist.empty:
             raise HTTPException(status_code=404, detail="No data found for the given parameters")
 
+        # Convert DataFrame to dictionary
         formatted_data = []
         for date, row in hist.iterrows():
-            if date.tzinfo is not None:
-                ts = date.tz_convert("UTC").strftime("%Y-%m-%dT%H:%M:%SZ")
-            else:
-                ts = date.strftime("%Y-%m-%dT%H:%M:%SZ")
+            # Convert numpy.float64 to native Python float
             formatted_data.append({
-                "timestamp": ts,
+                "timestamp": date.isoformat() + "Z",
                 "open": float(row["Open"]),
                 "high": float(row["High"]),
                 "low": float(row["Low"]),

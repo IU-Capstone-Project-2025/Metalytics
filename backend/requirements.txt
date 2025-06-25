@@ -10,3 +10,4 @@ joblib
 statsmodels
 xgboost
 yfinance
+setuptools

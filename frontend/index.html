@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
     <link rel="stylesheet" type="text/css" href="css/normalize.css">
-    <link rel="stylesheet" type="text/css" href="css/states.css">
     <link rel="stylesheet" type="text/css" href="css/style.css">
-    <link rel="stylesheet" type="text/css" href="css/media.css">
     <title>Metalytics</title>
 </head>
 <body>
@@ -201,34 +199,34 @@
                 <div class="graph__period">
                     <ul class="graph__list list-reset list-flex">
                         <li class="graph__item">
-                            <button class="graph__button btn-reset">
+                            <button data-interval="hour" class="graph__button btn-reset">
                                 Hour
                             </button>
                         </li>
                         <li class="graph__item">
-                            <button class="graph__button btn-reset">
+                            <button data-interval="day" class="graph__button btn-reset">
                                 Day
                             </button>
                         </li>
                         <li class="graph__item">
-                            <button class="graph__button btn-reset">
+                            <button data-interval="week" class="graph__button btn-reset">
                                 Week
                             </button>
                         </li>
                         <li class="graph__item">
-                            <button class="graph__button btn-reset">
+                            <button data-interval="month" class="graph__button btn-reset">
                                 Month
                             </button>
                         </li>
                         <li class="graph__item">
-                            <button class="graph__button btn-reset">
+                            <button data-interval="year" class="graph__button btn-reset">
                                 Year
                             </button>
                         </li>
                     </ul>
                 </div>
                 <div class="graph__block">
-                    
+                    <canvas id="priceChart"></canvas>
                 </div>
             </section>
             <section class="report">
@@ -241,5 +239,6 @@
     </main>
 </body>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="js/script.js"></script>
 </html>

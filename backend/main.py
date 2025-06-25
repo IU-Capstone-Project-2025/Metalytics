@@ -103,14 +103,29 @@ async def metal_historical_data(metal_id: str, period: str, interval = "1d"):
             })
 
         if is_period_1hour:
-            pattern = formatted_data[-1]['timestamp'][:13]
+            # pattern = formatted_data[-1]['timestamp'][:13]
 
-            for i in range(1,61):
-                if formatted_data[-i]['timestamp'][:13] != pattern:
-                    i-=1
-                    break
+            # for i in range(1,61):
+            #     if formatted_data[-i]['timestamp'][:13] != pattern:
+            #         i-=1
+            #         break
 
-            croped_data = formatted_data[-i:]
+            # croped_data = formatted_data[-i:]
+
+            croped_data = {"msg":"wrong interval selection"}
+            
+            if interval == '1m':
+                croped_data = formatted_data[-60:]
+            if interval == '2m':
+                croped_data = formatted_data[-30:]
+            if interval == '5m':
+                croped_data = formatted_data[-12:]
+            if interval == '15m':
+                croped_data = formatted_data[-4:]
+            if interval == '30m':
+                croped_data = formatted_data[-2:]
+            if interval == '60m':
+                croped_data = formatted_data[-1:]
             return croped_data
 
         return formatted_data

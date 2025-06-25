@@ -57,20 +57,26 @@ async def metal_historical_data(metal_id: str, period: str, interval = "1d"):
     '''
         Get a historical data. 
         - metal_id: Metal name - e.g. "Gold"
-        - period: Time period - ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]. 
+        - period: Time period - ["1h", "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]. 
         - interval: Data interval - ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"]
     '''
     try:
+        is_period_1hour = False
+        
         # Check input parameters
         if metal_id not in Metal_dict.keys():
             raise HTTPException(status_code=404, detail="No matches for this metal")
 
-        if period not in ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]:
+        if period not in ["1h", "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]:
             raise HTTPException(status_code=400, detail="Wrong period parameter")
 
         if interval not in ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"]:
             raise HTTPException(status_code=400, detail="Wrong period parameter")
-
+        
+        if period == "1h":
+            is_period_1hour = True
+            period = "1d"
+        
         # Fetch metal data
         ticker_symbol = Metal_dict[metal_id]
         metal = yf.Ticker(ticker_symbol)
@@ -95,6 +101,17 @@ async def metal_historical_data(metal_id: str, period: str, interval = "1d"):
                 "close": float(row["Close"]),
                 "volume": int(row["Volume"])
             })
+
+        if is_period_1hour:
+            pattern = formatted_data[-1]['timestamp'][:13]
+
+            for i in range(1,61):
+                if formatted_data[-i]['timestamp'][:13] != pattern:
+                    i-=1
+                    break
+
+            croped_data = formatted_data[-i:]
+            return croped_data
 
         return formatted_data
     

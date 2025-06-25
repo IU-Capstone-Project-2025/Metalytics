@@ -142,6 +142,7 @@ span {
 
 .main {
     padding-top: 22px;
+	padding-bottom: 32px;
 }
 
 /* Swiper */
@@ -273,6 +274,10 @@ span {
 	line-height: 100%;
 	letter-spacing: 0;
 	color: var(--white);
+}
+
+.last-item {
+	margin-right: auto;
 }
 
 /* Report */

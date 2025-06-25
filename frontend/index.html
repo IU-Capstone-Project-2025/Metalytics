@@ -209,18 +209,28 @@
                             </button>
                         </li>
                         <li class="graph__item">
-                            <button data-interval="week" class="graph__button btn-reset">
+                            <button data-interval="week" class="graph__button btn-reset" disabled>
                                 Week
                             </button>
                         </li>
                         <li class="graph__item">
-                            <button data-interval="month" class="graph__button btn-reset">
+                            <button data-interval="month" class="graph__button btn-reset" disabled>
                                 Month
                             </button>
                         </li>
-                        <li class="graph__item">
-                            <button data-interval="year" class="graph__button btn-reset">
+                        <li class="graph__item last-item">
+                            <button data-interval="year" class="graph__button btn-reset" disabled>
                                 Year
+                            </button>
+                        </li>
+                        <li class="graph__item">
+                            <button data-select="historical" class="graph__button btn-reset active">
+                                Historical
+                            </button>
+                        </li>
+                        <li class="graph__item">
+                            <button data-select="predicted" class="graph__button btn-reset">
+                                Predicted
                             </button>
                         </li>
                     </ul>

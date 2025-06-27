@@ -275,14 +275,6 @@ async def get_version():
     }
 
 
-@app.get("/logs")
-async def get_logs():
-    '''
-        Output of logs
-    '''
-    return {"message": "Hello world"}
-
-
 def get_package_version(package_name: str) -> str:
     try:
         return pkg_resources.get_distribution(package_name).version

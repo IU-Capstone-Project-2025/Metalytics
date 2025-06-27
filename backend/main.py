@@ -52,7 +52,7 @@ async def metals_check():
     '''
     return {"available_metals": [key for key in Metal_dict.keys()]}
 
-@app.get("/metals/historical_data")
+@app.get("/historical_data/{metal_id}")
 async def metal_historical_data(metal_id: str, period: str, interval = "1d"):
     '''
         Get a historical data. 

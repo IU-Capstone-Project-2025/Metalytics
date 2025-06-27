@@ -537,7 +537,7 @@ class LSTMCloseFM(ForecastModel):
             Dropout(0.3),
             LSTM(64),
             Dense(32, activation='relu'),
-            Dense(1)
+            Dense(len(self.feature_names))
         ])
         model.compile(optimizer='adam', loss='mse')
         return model
@@ -578,34 +578,37 @@ class LSTMCloseFM(ForecastModel):
             verbose=1
         )
         return self
-
+        
     def predict(self, date_range: pd.DatetimeIndex) -> pd.Series:
-        # start with the last lag lines
         sequence = self.df_[self.feature_names].copy()
         sequence = sequence.bfill().ffill()
         last_sequence = sequence.values[-self.lag:]
         last_sequence_scaled = self.scaler.transform(last_sequence)
-        
-        predictions = []
+    
+        predictions_close_scaled = []
+
         for _ in date_range:
             x = last_sequence_scaled.reshape(1, self.lag, -1)
-            pred_scaled = self.model.predict(x, verbose=0)[0][0]
-            
-            # update close only
-            new_row = last_sequence_scaled[-1].copy()
-            new_row[0] = pred_scaled
-            last_sequence_scaled = np.vstack([last_sequence_scaled[1:], new_row])
-            predictions.append(pred_scaled)
-        
-        # denormalization
-        dummy = np.zeros((len(predictions), len(self.feature_names)))
-        dummy[:, 0] = predictions
-        predicted_close = self.scaler.inverse_transform(dummy)[:, 0]
+            pred_scaled_full = self.model.predict(x, verbose=0)[0]
+
+            pred_close_scaled = pred_scaled_full[0]
+            predictions_close_scaled.append(pred_close_scaled)
+
+            # update input sequence with the new prediction
+            last_sequence_scaled = np.vstack([
+                last_sequence_scaled[1:], 
+                pred_scaled_full
+            ])
     
+        dummy = np.zeros((len(predictions_close_scaled), len(self.feature_names)))
+        dummy[:, 0] = predictions_close_scaled
+        predicted_close = self.scaler.inverse_transform(dummy)[:, 0]
+
         if self.prediction_mode == 'diff':
             predicted_close = np.cumsum(predicted_close) + self.last_close_price
-        # cumulative sum to the last price (if diff)
+
         return pd.Series(predicted_close, index=date_range)
+
 
     def dump(self, path: str) -> None:
         self.model.save(f"{path}/LSTM_Close_model.h5")

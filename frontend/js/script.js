@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   const periodToInterval = {
-    hour:  "1h",
+    hour:  "1m",
     day:   "1h",
     week:  "1d",
     month: "1wk",
@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const periodToPeriodCode = {
-    hour:  "1d",
+    hour:  "1h",
     day:   "1d",
     week:  "1wk",
     month: "6mo",

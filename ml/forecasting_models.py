@@ -525,10 +525,12 @@ class LSTMCloseFM(ForecastModel):
         self.df_: pd.DataFrame = None
         self.last_close_price: float = None
         self.feature_names = [
-            'Close', 'High', 'Low', 'Volume', 
-            'EMA20', 'RSI14', 'ATR14',
-            'MACD', 'MACD_Signal', 'MACD_Hist'
+        'Close', 'High', 'Low', 'Volume',
+        'EMA20', 'RSI14', 'ATR14',
+        'MACD', 'MACD_Signal', 'MACD_Hist',
+        'sin_hour', 'cos_hour', 'sin_day_of_week', 'cos_day_of_week'
         ]
+
         
     def _build_model(self):
         model = Sequential([
@@ -544,11 +546,23 @@ class LSTMCloseFM(ForecastModel):
 
     def build(self, df: pd.DataFrame):
         self.last_close_price = df.iloc[-1]['Close']
-        self.df_ = df.copy()
+        self.df_ = self.build_forecast_data(df)
         return self.df_
 
+
     def build_forecast_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        return df  # df already has all necessary features.
+        df = df.copy()
+        df['hour'] = df.index.hour
+        df['day_of_week'] = df.index.dayofweek
+
+        df['sin_hour'] = np.sin(2 * np.pi * df['hour'] / 24)
+        df['cos_hour'] = np.cos(2 * np.pi * df['hour'] / 24)
+
+        df['sin_day_of_week'] = np.sin(2 * np.pi * df['day_of_week'] / 7)
+        df['cos_day_of_week'] = np.cos(2 * np.pi * df['day_of_week'] / 7)
+
+        return df
+
     
     def _prepare_data(self, df):
         data = df[self.feature_names].copy()

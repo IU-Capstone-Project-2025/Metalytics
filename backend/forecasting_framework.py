@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-from forecasting_models import ForecastModel, ClosePriceFM, LSTMCloseFM
+from forecasting_models import ForecastModel, LSTMCloseFM
 
 
 class ForecastFramework:

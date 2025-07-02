@@ -668,7 +668,8 @@ class LSTMCloseFM(ForecastModel):
             Dense(params['layer3'], activation='relu'),
             Dense(len(self.feature_names))
         ])
-        model.compile(optimizer=Adam(learning_rate=params['learning_rate']), loss='mse')
+        model.compile(optimizer=Adam(learning_rate=params['learning_rate']),
+                      loss='mse')
         return model
 
     def build(self, df: pd.DataFrame):
@@ -724,7 +725,8 @@ class LSTMCloseFM(ForecastModel):
                 validation_data=(X_val, y_val),
                 epochs=self.epochs,
                 batch_size=64,
-                callbacks=[EarlyStopping(patience=self.patience, restore_best_weights=True)],
+                callbacks=[EarlyStopping(patience=self.patience,
+                                         restore_best_weights=True)],
                 verbose=0
             )
 
@@ -759,7 +761,8 @@ class LSTMCloseFM(ForecastModel):
             validation_data=(X_val, y_val),
             epochs=self.epochs,
             batch_size=64,
-            callbacks=[EarlyStopping(patience=self.patience, restore_best_weights=True)],
+            callbacks=[EarlyStopping(patience=self.patience,
+                                     restore_best_weights=True)],
             verbose=1
         )
         return self
@@ -785,12 +788,15 @@ class LSTMCloseFM(ForecastModel):
                 pred_scaled_full
             ])
 
-        dummy = np.zeros((len(predictions_close_scaled), len(self.feature_names)))
+        dummy = np.zeros((len(predictions_close_scaled),
+                          len(self.feature_names)))
         dummy[:, 0] = predictions_close_scaled
         predicted_close = self.scaler.inverse_transform(dummy)[:, 0]
 
         if self.prediction_mode == 'diff':
-            predicted_close = np.cumsum(predicted_close) + self.last_close_price
+            predicted_close = (
+                np.cumsum(predicted_close) + self.last_close_price
+            )
 
         return pd.Series(predicted_close, index=date_range)
 

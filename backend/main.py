@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from forecasting_framework import ForecastFramework
+from forecasting_models import LSTMCloseFM
 import yfinance as yf
 import os
 import psutil
@@ -197,8 +198,13 @@ async def metal_forecast(metal_id: str):
         )
 
         # Load existing model
-        path: str = "baseline_model"
-        fm = ForecastFramework.load_from_file(path, dataframe)
+        path: str = "lstm_model"
+        fm = ForecastFramework.load_from_file(
+            path,
+            dataframe,
+            forecast_model=LSTMCloseFM(),
+            name="lstm_model",
+        )
 
         # Create forecast
         unit = "h"  # units of time
@@ -259,8 +265,13 @@ async def metal_forcast_value_of_units(metal_id: str, unit="h", value=24):
         )
 
         # Load existing model
-        path: str = "baseline_model"
-        fm = ForecastFramework.load_from_file(path, dataframe)
+        path: str = "lstm_model"
+        fm = ForecastFramework.load_from_file(
+            path,
+            dataframe,
+            forecast_model=LSTMCloseFM(),
+            name="lstm_model",
+        )
 
         # Obtain pandas series with forecasted data
         forecast = fm.create_forecast(value=value, unit=unit)

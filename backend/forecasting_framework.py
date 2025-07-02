@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-from forecasting_models import ForecastModel, ClosePriceFM
+from forecasting_models import ForecastModel, LSTMCloseFM
 
 
 class ForecastFramework:
@@ -18,8 +18,8 @@ class ForecastFramework:
     def __init__(
         self,
         df: pd.DataFrame,
-        forecast_model: ForecastModel = ClosePriceFM(),
-        name="baseline_model",
+        forecast_model: ForecastModel = LSTMCloseFM(),
+        name="lstm_model",
     ):
         self.df = df
         self.forecast_model = forecast_model
@@ -47,8 +47,8 @@ class ForecastFramework:
     def load_from_file(
         path: str,
         df: pd.DataFrame,
-        forecast_model: ForecastModel = ClosePriceFM(),
-        name="baseline_model",
+        forecast_model: ForecastModel = LSTMCloseFM(),
+        name="lstm_model",
     ):
         """
         (Constructor)

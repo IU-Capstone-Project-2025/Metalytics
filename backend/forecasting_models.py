@@ -4,11 +4,18 @@ import joblib
 import ta
 from numpy.lib.stride_tricks import sliding_window_view
 from abc import ABC, abstractmethod
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Any, Callable
 from sklearn.base import BaseEstimator
 from sklearn.preprocessing import MinMaxScaler
 from statsmodels.tsa.arima.model import ARIMA, ARIMAResults
 from xgboost import XGBRegressor
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.saving import load_model
+from sklearn.model_selection import TimeSeriesSplit
+from sklearn.metrics import mean_squared_error
 
 
 class ForecastModel(ABC):
@@ -632,3 +639,172 @@ class ClosePriceFM(ForecastModel):
         self.model_ = joblib.load(f"{path}/Close_predictor.joblib")
         for model in self.feature_models.values():
             model.load(df, path)
+
+
+class LSTMCloseFM(ForecastModel):
+    def __init__(self, lag=24, prediction_mode='original'):
+        if prediction_mode not in ['original', 'diff']:
+            raise ValueError("prediction_mode must be 'original' or 'diff'")
+        self.prediction_mode = prediction_mode
+        self.lag = lag
+        self.scaler = MinMaxScaler()
+        self.df_: pd.DataFrame = None
+        self.last_close_price: float = None
+        self.feature_names = [
+            'Close', 'High', 'Low', 'Volume',
+            'EMA20', 'RSI14', 'ATR14',
+            'MACD', 'MACD_Signal', 'MACD_Hist',
+            'sin_hour', 'cos_hour', 'sin_day_of_week', 'cos_day_of_week'
+        ]
+        self.epochs = 50
+        self.patience = 10
+
+    def _build_model(self, params: Dict[str, Any]):
+        model = Sequential([
+            Input(shape=(len(self.feature_names), self.lag)),
+            LSTM(params['layer1'], return_sequences=True),
+            Dropout(params['dropout']),
+            LSTM(params['layer2']),
+            Dense(params['layer3'], activation='relu'),
+            Dense(len(self.feature_names))
+        ])
+        model.compile(optimizer=Adam(learning_rate=params['learning_rate']),
+                      loss='mse')
+        return model
+
+    def build(self, df: pd.DataFrame):
+        self.last_close_price = df.iloc[-1]['Close']
+        self.df_ = self.build_forecast_data(df)
+        return self.df_
+
+    def build_forecast_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        df['hour'] = df.index.hour
+        df['day_of_week'] = df.index.dayofweek
+
+        df['sin_hour'] = np.sin(2 * np.pi * df['hour'] / 24)
+        df['cos_hour'] = np.cos(2 * np.pi * df['hour'] / 24)
+
+        df['sin_day_of_week'] = np.sin(2 * np.pi * df['day_of_week'] / 7)
+        df['cos_day_of_week'] = np.cos(2 * np.pi * df['day_of_week'] / 7)
+
+        return df
+
+    def _prepare_data(self, df):
+        data = df[self.feature_names].copy()
+        data = data.bfill().ffill()  # filling in the gaps
+
+        data_scaled = self.scaler.fit_transform(data)
+        X = sliding_window_view(data_scaled, window_shape=self.lag, axis=0)
+        X = X[:-1]
+        y = data_scaled[self.lag:]
+
+        return X, y
+
+    def cross_validation(self,
+                         df: pd.DataFrame,
+                         params: Dict[str, Any],
+                         K: int = 20, test_size: int = 24*10*1,
+                         metric: Callable = mean_squared_error) -> float:
+        history_df = self.build(df).copy()
+
+        tss = TimeSeriesSplit(n_splits=K, test_size=test_size, gap=24)
+
+        X, y = self._prepare_data(history_df)
+
+        score = 0
+
+        for train_idx, val_idx in tss.split(X):
+            X_train, X_val = X[train_idx][:-self.lag], X[val_idx][:-self.lag]
+            y_train, y_val = y[train_idx][self.lag:], y[val_idx][self.lag:]
+
+            self.model = self._build_model(params)
+
+            self.model.fit(
+                X_train, y_train,
+                validation_data=(X_val, y_val),
+                epochs=self.epochs,
+                batch_size=64,
+                callbacks=[EarlyStopping(patience=self.patience,
+                                         restore_best_weights=True)],
+                verbose=0
+            )
+
+            y_pred = self.model.predict(X_val, verbose=0)
+
+            score += metric(y_val, y_pred)
+
+        return score / K
+
+    def fit(self,
+            df: pd.DataFrame,
+            params: Dict[str, Any] = {
+                'layer1': 128,
+                'layer2': 64,
+                'layer3': 32,
+                'dropout': 0.3,
+                'learning_rate': 0.01
+            },
+            ):
+
+        self.build(df)
+        X, y = self._prepare_data(self.df_)
+
+        val_size = int(len(X) * 0.1)
+        X_train, y_train = X[:-val_size], y[:-val_size]
+        X_val, y_val = X[-val_size:], y[-val_size:]
+
+        self.model = self._build_model(params)
+
+        self.model.fit(
+            X_train, y_train,
+            validation_data=(X_val, y_val),
+            epochs=self.epochs,
+            batch_size=64,
+            callbacks=[EarlyStopping(patience=self.patience,
+                                     restore_best_weights=True)],
+            verbose=1
+        )
+        return self
+
+    def predict(self, date_range: pd.DatetimeIndex) -> pd.Series:
+        sequence = self.df_[self.feature_names].copy()
+        sequence = sequence.bfill().ffill()
+        last_sequence = sequence.values[-self.lag:]
+        last_sequence_scaled = self.scaler.transform(last_sequence)
+
+        predictions_close_scaled = []
+
+        for _ in date_range:
+            x = last_sequence_scaled.reshape(1, len(self.feature_names), -1)
+            pred_scaled_full = self.model.predict(x, verbose=0)[0]
+
+            pred_close_scaled = pred_scaled_full[0]
+            predictions_close_scaled.append(pred_close_scaled)
+
+            # update input sequence with the new prediction
+            last_sequence_scaled = np.vstack([
+                last_sequence_scaled[1:],
+                pred_scaled_full
+            ])
+
+        dummy = np.zeros((len(predictions_close_scaled),
+                          len(self.feature_names)))
+        dummy[:, 0] = predictions_close_scaled
+        predicted_close = self.scaler.inverse_transform(dummy)[:, 0]
+
+        if self.prediction_mode == 'diff':
+            predicted_close = (
+                np.cumsum(predicted_close) + self.last_close_price
+            )
+
+        return pd.Series(predicted_close, index=date_range)
+
+    def dump(self, path: str) -> None:
+        self.model.save(f"{path}/LSTM_Close_model.keras")
+        joblib.dump(self.scaler, f"{path}/LSTM_Close_scaler.pkl")
+
+    def load(self, df: pd.DataFrame, path: str):
+        self.df_ = self.build(df.copy())
+        self.model = load_model(f"{path}/LSTM_Close_model.keras")
+        self.scaler = joblib.load(f"{path}/LSTM_Close_scaler.pkl")

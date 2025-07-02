@@ -1,4 +1,4 @@
-let selectedDate = 'hour';
+let selectedDate = 'day';
 
 const swiper = new Swiper('.swiper', {
     direction: 'horizontal',
@@ -101,7 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function fetchData(periodKey) {
     const period = periodToPeriodCode[periodKey];
     const interval = periodToInterval[periodKey];
-    const response = await fetch(`http://localhost:8000/metals/historical_data?metal_id=Gold&period=${period}&interval=${interval}`);
+    const response = await fetch(`http://localhost:8000/historical_data/Gold?period=${period}&interval=${interval}`);
     
     if (!response.ok) {
       console.error("Error", response.status);

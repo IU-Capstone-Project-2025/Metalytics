@@ -1,9 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Inria+Sans:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
 :root {
     --black: #000;
     --white: #fff;
     --primary: #242424;
     --dark: #1A1A1A;
+	--focus: #363232;
     --main: #D3AC49;
+    --swiper: #2A2A2A;
+    --button: #D0D0D0;
+	--chartsBack: #242424;
+	--chartsBackPrimary: #2A2A2A;
+	--chartsBtn: #D0D0D0;
+	--grey: #A09999;
+	--borderColor: #444444;
+	--backColor: #45474680;
 }
 
 html {
@@ -20,7 +31,8 @@ html {
 body {
 	min-width: 320px;
 	height: 100vh;
-	font-family: sans-serif;
+    margin: 0;
+	font-family: "Inria Sans" ,sans-serif;
 	overflow-x: hidden;
 	background-color: var(--dark);
 	line-height: 1.1;
@@ -66,7 +78,7 @@ span {
 }
 
 .container {
-    max-width: 1844px;
+    max-width: 1756px;
     margin: 0 auto;
 	flex-wrap: wrap;
 }
@@ -74,10 +86,13 @@ span {
 /* Header */
 
 .header {
-    padding-top: 8px;
+    margin-bottom: 20px;
+    padding-top: 70px;
+    padding-left: 30px;
 }
 
 .header__logo {
+    margin-top: 11px;
     align-items: center;
 }
 
@@ -91,17 +106,17 @@ span {
 }
 
 .header__metals {
-    width: 840px;
+    width: 720px;
     margin-left: 40px;
     flex-direction: column;
 }
 
 .header__title {
     margin: 0 auto;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     font-size: 48px;
     color: var(--main);
-    letter-spacing: -0.7px;
+    letter-spacing: -0.4px;
 }
 
 .header__item:not(:last-child) {
@@ -109,19 +124,170 @@ span {
 }
 
 .header__button {
+	position: relative;
+  	overflow: hidden;
     width: 220px;
     min-height: 50px;
-    padding: 3px 6px;
+    padding: 3px 30px;
+    align-items: center;
     background: var(--primary);
     border-radius: 30px;
+    font-size: 32px;
+	z-index: 1;
+    color: var(--white);
+    border: none;
+}
+
+.header__button>svg {
+    margin-right: 14px;
+}
+
+.header__button>span {
+    position: relative;
     font-size: 32px;
     color: var(--white);
 }
 
 /* Main */
 
+.main {
+    padding-top: 22px;
+	padding-bottom: 32px;
+}
+
+/* Swiper */
+.swiper {
+    width: 91%;
+    height: 100%;
+    margin-left: 10px;
+    padding-top: 25px;
+    background-color: var(--primary);
+}
+
+.swiper-button-next::after, .swiper-button-prev::after {
+	content: " ";
+}
+
+.swiper-button-next {
+	right: 32.3%;
+}
+
+.swiper-button-next>svg {
+	transform: rotate(180deg);
+}
+
+.swiper-button-prev {
+	left: 33%;
+}
+
+.swiper-button-next, .swiper-button-prev {
+	width: 15px;
+	height: 15px;
+	top: 100%;
+	z-index: 15;
+	background-size: contain;
+}
+
+.swiper-horizontal>.swiper-pagination-bullets, .swiper-pagination-bullets.swiper-pagination-horizontal, .swiper-pagination-custom, .swiper-pagination-fraction-pagination {
+	bottom: 5px;
+	left: 0.5px;
+}
+
+.swiper-pagination-bullet {
+	background: url('../img/swiper-bullet-default.svg') no-repeat;
+	width: 11px;
+	height: 11px;
+}
+
+.swiper-pagination-bullet-active {
+	background: url('../img/swiper-bullet-active.svg') no-repeat;
+}
+
+.swiper-wrapper {
+	padding: 0;
+}
+
+.swiper-slide>div {
+	padding: 32px 22px 50px 20px;
+}
+
+.swiper-slide {
+    border: 1px solid var(--swiper);
+}
+
 /* News */
 
+.news {
+	width: 28.3%;
+	min-height: 650px;
+}
+
+.news__info-block {
+	height: 80%;
+	margin-bottom: 24px;
+	padding-left: 10px;
+}
+
+.news__title {
+	margin-bottom: 20px;
+    text-align: center;
+	font-weight: 500;
+	font-size: 36px;
+	line-height: 100%;
+	letter-spacing: 0;
+	color: var(--white);
+}
+
+.news__info {
+	width: 94%;
+	text-align: center;
+	font-size: 24px;
+	line-height: 120%;
+	letter-spacing: 1px;
+	color: var(--white);
+}
+
+.news__date {
+    position: absolute;
+	width: 140px;
+	font-weight: 500;
+	font-size: 13px;
+	line-height: 100%;
+	letter-spacing: 0;
+	color: var(--white);
+	bottom: 66px;
+	right: -21px;
+}
+
 /* Graph */
+
+.graph {
+    width: 70%;
+    min-height: 200px;
+    padding: 30px 25px;
+    background-color: var(--primary);
+}
+
+.graph__title {
+    margin-bottom: 50px;
+    text-align: center;
+    font-size: 48px;
+    color: var(--main);
+}
+
+.graph__button {
+	width: 87.4px;
+	min-height: 42px;
+    background-color: var(--swiper);
+	font-weight: 500;
+	font-size: 15px;
+	line-height: 100%;
+	letter-spacing: 0;
+	color: var(--white);
+}
+
+.last-item {
+	margin-right: auto;
+}
 
 /* Report */

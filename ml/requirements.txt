@@ -7,3 +7,5 @@ joblib
 scikit-learn
 statsmodels
 xgboost
+tensorflow
+pyswarms

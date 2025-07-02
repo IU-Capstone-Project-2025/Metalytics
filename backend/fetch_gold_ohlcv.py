@@ -10,7 +10,7 @@ save_path = "gold_futures_yahoo_1h.csv"
 STEP_DAYS = 60
 
 end_date = datetime.today()
-start_date = end_date - timedelta(days=730) 
+start_date = end_date - timedelta(days=730)
 
 date_ranges = []
 cursor = start_date
@@ -23,7 +23,9 @@ while cursor < end_date:
 all_data = []
 for start, end in date_ranges:
     print(f"⬇️ Загружаю {start.date()} ➡️ {end.date()} ...")
-    df = yf.download(ticker, start=start, end=end, interval=interval, progress=False)
+    df = yf.download(
+        ticker, start=start, end=end, interval=interval, progress=False
+    )
     if not df.empty:
         all_data.append(df)
 

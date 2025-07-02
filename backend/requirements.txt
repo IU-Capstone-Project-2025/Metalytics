@@ -11,3 +11,6 @@ statsmodels
 xgboost
 yfinance
 setuptools
+pytest
+httpx
+flake8

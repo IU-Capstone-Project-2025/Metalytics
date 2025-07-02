@@ -11,3 +11,5 @@ statsmodels
 xgboost
 yfinance
 setuptools
+pytest
+httpx

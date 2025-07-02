@@ -5,9 +5,16 @@
     --white: #fff;
     --primary: #242424;
     --dark: #1A1A1A;
+	--focus: #363232;
     --main: #D3AC49;
     --swiper: #2A2A2A;
     --button: #D0D0D0;
+	--chartsBack: #242424;
+	--chartsBackPrimary: #2A2A2A;
+	--chartsBtn: #D0D0D0;
+	--grey: #A09999;
+	--borderColor: #444444;
+	--backColor: #45474680;
 }
 
 html {
@@ -117,6 +124,8 @@ span {
 }
 
 .header__button {
+	position: relative;
+  	overflow: hidden;
     width: 220px;
     min-height: 50px;
     padding: 3px 30px;
@@ -124,7 +133,9 @@ span {
     background: var(--primary);
     border-radius: 30px;
     font-size: 32px;
+	z-index: 1;
     color: var(--white);
+    border: none;
 }
 
 .header__button>svg {
@@ -135,7 +146,6 @@ span {
     position: relative;
     font-size: 32px;
     color: var(--white);
-    top: 3px;
 }
 
 /* Main */

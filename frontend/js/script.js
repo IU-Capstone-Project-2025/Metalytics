@@ -1,3 +1,5 @@
+let selectedDate = 'hour';
+
 const swiper = new Swiper('.swiper', {
     direction: 'horizontal',
     loop: true,
@@ -149,6 +151,18 @@ document.addEventListener("DOMContentLoaded", () => {
     chart.update();
   }
 
+  function activeSelect() {
+    document.querySelectorAll('[data-select]').forEach(button => {
+      if (button.dataset.select === currentSelect) {
+        button.classList.add('graph__button--active');
+      } 
+      
+      else {
+        button.classList.remove('graph__button--active');
+      }
+    });
+  }
+
   document.querySelectorAll(".graph__button").forEach(button => {
     button.addEventListener("click", () => {
       if (button.dataset.interval) {
@@ -165,6 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (button.dataset.select) {
         currentSelect = button.dataset.select;
         setSelectButtonActive(currentSelect);
+        activeSelect();
         if (currentSelect === "historical") {
           chart.data.datasets[0].borderColor = "red";
           chart.data.datasets[0].backgroundColor = "rgba(255,0,0,0.1)";
@@ -178,4 +193,73 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   fetchData("day");
+
+  document.querySelectorAll('[data-metal]').forEach(button => {
+    button.addEventListener('click', () => {
+      selectedMetal = button.dataset.metal;
+      activeMetal();
+    });
+  });
+
+  document.querySelectorAll('[data-interval]').forEach(button => {
+    button.addEventListener('click', () => {
+      selectedDate = button.dataset.interval;
+      activeInterval();
+    });
+  });
+
+  activeInterval();
+  activeSelect();
+
+  addRippleEffectToMetalButtons();
 });
+
+function activeInterval() {
+  document.querySelectorAll('[data-interval]').forEach(button => {
+    if (button.dataset.interval === selectedDate) {
+      button.classList.add('graph__button--active');
+    } 
+    
+    else {
+      button.classList.remove('graph__button--active');
+    }
+  });
+  
+}
+
+function activeMetal() {
+  document.querySelectorAll('[data-metal]').forEach(button => {
+    if (button.dataset.metal === selectedMetal) {
+      button.classList.add('header__button--active');
+    } 
+    
+    else {
+      button.classList.remove('header__button--active');
+    }
+  });
+}
+
+function addRippleEffectToMetalButtons() {
+  document.querySelectorAll('.header__button').forEach(button => {
+    button.addEventListener('click', function(e) {
+      const oldRipple = button.querySelector('.ripple');
+      if (oldRipple) oldRipple.remove();
+      const rect = button.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const x = e.clientX - rect.left - size / 2;
+      const y = e.clientY - rect.top - size / 2;
+
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = x + 'px';
+      ripple.style.top = y + 'px';
+
+      const borderColor = getComputedStyle(button).getPropertyValue('--button');
+      ripple.style.backgroundColor = borderColor.trim();
+      button.appendChild(ripple);
+
+      ripple.addEventListener('animationend', () => ripple.remove());
+    });
+  });
+}

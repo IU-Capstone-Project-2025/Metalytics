@@ -13,3 +13,4 @@ yfinance
 setuptools
 pytest
 httpx
+flake8

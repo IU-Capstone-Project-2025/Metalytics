@@ -11,10 +11,16 @@ class ForecastFramework:
         df (pd.DataFrame): dataframe for models.
         forecast_model (ForecastModel): model forecasting target.
     """
+
     df: pd.DataFrame
     forecast_model: ForecastModel
 
-    def __init__(self, df: pd.DataFrame, forecast_model: ForecastModel = ClosePriceFM(), name="baseline_model"):
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        forecast_model: ForecastModel = ClosePriceFM(),
+        name="baseline_model",
+    ):
         self.df = df
         self.forecast_model = forecast_model
         self.name = name
@@ -39,10 +45,10 @@ class ForecastFramework:
         self.forecast_model.dump(path=path)
 
     def load_from_file(
-            path: str,
-            df: pd.DataFrame,
-            forecast_model: ForecastModel = ClosePriceFM(),
-            name="baseline_model"
+        path: str,
+        df: pd.DataFrame,
+        forecast_model: ForecastModel = ClosePriceFM(),
+        name="baseline_model",
     ):
         """
         (Constructor)
@@ -90,7 +96,9 @@ class ForecastFramework:
         """
         date_index = self.df.index
         return pd.date_range(
-            date_index[-1] + pd.Timedelta(value=1, unit='h'),
-            date_index[-1] + pd.Timedelta(value=1, unit='h') + pd.Timedelta(value=value, unit=unit),
-            freq='h'
+            date_index[-1] + pd.Timedelta(value=1, unit="h"),
+            date_index[-1]
+            + pd.Timedelta(value=1, unit="h")
+            + pd.Timedelta(value=value, unit=unit),
+            freq="h",
         )

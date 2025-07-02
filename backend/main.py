@@ -52,7 +52,7 @@ async def metals_check():
     '''
     return {"available_metals": [key for key in Metal_dict.keys()]}
 
-@app.get("/metals/historical_data")
+@app.get("/historical_data/{metal_id}")
 async def metal_historical_data(metal_id: str, period: str, interval = "1d"):
     '''
         Get a historical data. 
@@ -276,14 +276,6 @@ async def get_version():
             "docker": get_package_version("docker"),
         }
     }
-
-
-@app.get("/logs")
-async def get_logs():
-    '''
-        Output of logs
-    '''
-    return {"message": "Hello world"}
 
 
 def get_package_version(package_name: str) -> str:

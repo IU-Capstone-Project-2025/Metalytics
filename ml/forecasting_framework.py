@@ -22,13 +22,13 @@ class ForecastFramework:
 
     def __init__(
             self,
-            df: pd.DataFrame,
+            data_loader: GoldDataLoader,
             target_columns=['Close'],
             forecast_model=ClosePriceFM(),
             name="baseline_model",
             train_size=0.7
     ):
-        self.df = df
+        self.df = data_loader.load_data()  
         self.target_columns = target_columns
 
         train_size = int(len(self.df) * train_size)

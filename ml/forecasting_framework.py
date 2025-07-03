@@ -4,7 +4,7 @@ from matplotlib.dates import MonthLocator, DateFormatter
 from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
 import os
 from forecasting_models import ForecastModel, ClosePriceFM
-
+from data_loader import GoldDataLoader
 
 class ForecastFramework:
     """

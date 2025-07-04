@@ -29,7 +29,7 @@ html {
 }
 
 body {
-	min-width: 320px;
+	min-width: 319px;
 	height: 100vh;
     margin: 0;
 	font-family: "Inria Sans" ,sans-serif;

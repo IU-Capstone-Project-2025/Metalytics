@@ -1,10 +1,10 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.dates import MonthLocator, DateFormatter
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
 import os
 from forecasting_models import ForecastModel, ClosePriceFM
-
+from data_loader import GoldDataLoader
 
 class ForecastFramework:
     """
@@ -22,13 +22,13 @@ class ForecastFramework:
 
     def __init__(
             self,
-            df: pd.DataFrame,
+            data_loader: GoldDataLoader,
             target_columns=['Close'],
             forecast_model=ClosePriceFM(),
             name="baseline_model",
             train_size=0.7
     ):
-        self.df = df
+        self.df = data_loader.load_data()  
         self.target_columns = target_columns
 
         train_size = int(len(self.df) * train_size)
@@ -43,7 +43,12 @@ class ForecastFramework:
         """
         self.forecast_model.fit(self.train_set)
 
-    def evaluate(self, metric_funcs={'MAE': mean_absolute_error, 'MSE': mean_squared_error}):
+    def evaluate(self,
+                 metric_funcs={
+                     'MAE': mean_absolute_error,
+                     'MSE': mean_squared_error,
+                     'MAPE': mean_absolute_percentage_error
+                     }):
         """
         Evaluates model on the test set.
         """
@@ -66,10 +71,9 @@ class ForecastFramework:
         for target_idx in range(true_values.shape[1]):
             ax[target_idx, 0].plot(self.test_set.index, true_values)
             ax[target_idx, 0].plot(self.test_set.index, forecast_values, linestyle='--')
-            ax[target_idx, 0].xaxis.set_major_locator(MonthLocator(interval=3))
-            ax[target_idx, 0].xaxis.set_major_formatter(DateFormatter('%b %Y'))
+            ax[target_idx, 0].xaxis.set_major_locator(MonthLocator(interval=1))
+            ax[target_idx, 0].xaxis.set_major_formatter(DateFormatter('%b-%Y'))
             ax[target_idx, 0].set_ylabel(self.target_columns[target_idx])
-        fig.autofmt_xdate(rotation=45)
         return fig
 
     def dump_model(self, path: str = None) -> None:

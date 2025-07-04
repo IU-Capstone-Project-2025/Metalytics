@@ -22,7 +22,6 @@ app.add_middleware(
 
 
 def get_system_metrics() -> Dict[str, Any]:
-    """Optional function to gather system metrics"""
     try:
         return {
             "cpu_usage": psutil.cpu_percent(),

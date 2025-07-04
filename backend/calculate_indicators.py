@@ -6,7 +6,7 @@ output_path = "gold_futures_with_indicators.csv"
 
 df = pd.read_csv(input_path, skiprows=3, index_col=0, parse_dates=True)
 
-df.columns = ["Close", "High", "Low", "Open", "Volume"]
+df.columns = ["Close", "High", "Low", "Open"]
 for col in ["Close", "High", "Low", "Open", "Volume"]:
     df[col] = pd.to_numeric(df[col], errors="coerce")
 

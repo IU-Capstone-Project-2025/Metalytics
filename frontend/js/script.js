@@ -190,6 +190,9 @@ document.addEventListener("DOMContentLoaded", () => {
     chart.data.labels = labels;
     chart.data.datasets[0].data = prices;
     chart.update();
+    
+    // Update swiper height after chart update
+    setTimeout(setSwiperHeight, 100);
   }
 
   async function fetchPredictedData(periodKey) {
@@ -215,6 +218,9 @@ document.addEventListener("DOMContentLoaded", () => {
     chart.data.datasets[0].borderColor = "blue";
     chart.data.datasets[0].backgroundColor = "rgba(0,0,255,0.1)";
     chart.update();
+    
+    // Update swiper height after chart update
+    setTimeout(setSwiperHeight, 100);
   }
 
   function activeSelect() {
@@ -293,7 +299,48 @@ document.addEventListener("DOMContentLoaded", () => {
   addRippleEffectToMetalButtons();
   
   updateNewsContent();
+  
+  // Set swiper height to match graph section
+  setSwiperHeight();
+
+  let newsButton = document.querySelector('.swiper-button-open');
+  let newsSection = document.querySelector('.news');
+  let newsButtonClose = document.querySelector('.swiper-button-close');
+
+  newsButton.addEventListener('click', function(e) {
+    e.stopPropagation();
+    newsSection.style.left = '0px';
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!newsSection.contains(e.target)) {
+      newsSection.style.left = '';
+    }
+  });
+
+  newsButtonClose.addEventListener('click', function(e) {
+    e.stopPropagation();
+    newsSection.style.left = '';
+  });
+  
+  // Add resize listener to update swiper height when window resizes
+  window.addEventListener('resize', setSwiperHeight);
 });
+
+function setSwiperHeight() {
+  const graphSection = document.querySelector('.graph');
+  const swiperElement = document.querySelector('.swiper');
+  
+  if (graphSection && swiperElement) {
+    const graphHeight = graphSection.offsetHeight;
+    swiperElement.style.height = graphHeight + 'px';
+    
+    // Update swiper if it exists
+    if (swiper) {
+      swiper.update();
+    }
+  }
+}
 
 function updateNewsContent() {
   const newsData = metalNews[selectedMetal];
@@ -381,4 +428,7 @@ function updateUI() {
   newsTitle.textContent = metalNames[selectedMetal];
 
   updateNewsContent();
+  
+  // Update swiper height after UI changes
+  setTimeout(setSwiperHeight, 100);
 }

@@ -162,12 +162,23 @@ span {
 }
 
 /* Swiper */
+.swiper-container {
+	position: relative;
+	height: 100%;
+}
+
 .swiper {
     width: 91%;
     height: 100%;
     margin-left: 10px;
     padding-top: 25px;
     background-color: var(--primary);
+}
+
+.swiper-button--hd {
+	display: none;
+	position: absolute;
+	border-radius: 100%;
 }
 
 .swiper-button-next::after, .swiper-button-prev::after {

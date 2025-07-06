@@ -1,0 +1,99 @@
+@media (max-width: 1780px) {
+    .container {
+        max-width: 97%;
+    }
+}
+
+@media (max-width: 1485px) {
+    .header {
+        padding-top: 30px;
+    }
+
+    .header>.container {
+        flex-direction: column;
+    }
+
+    .header__logo {
+        width: 50%;
+        margin-top: 0;
+    }
+
+    .header__metals {
+        width: 100%;
+    }
+
+    .main>.container {
+        position: relative;
+        justify-content: center;
+    }
+
+    .news {
+        position: absolute;
+        left: -24%;
+    }
+
+    .swiper {
+        height: 734px;
+    }
+
+    .swiper-button--hd {
+        display: block;
+        width: 50px;
+        height: 50px;
+        background-color: var(--primary);
+        z-index: 3;
+    }
+
+    .swiper-button-open {
+        top: 25px;
+        right: 0;
+    }
+
+    .swiper-button-close {
+        transform: rotate(-180deg);
+        top: 23px;
+        left: -15px;
+    }
+
+    .news__info {
+        width: 100%;
+    }
+
+    .news__date {
+        width: 115px;
+        font-size: 12px;
+        right: -10px;
+    }
+
+    .graph {
+        width: 85%;
+        margin-left: 45px;
+    }
+}
+
+@media (max-width: 1300px) {
+    .news__date {
+        right: 31%;
+        bottom: 95px;
+        font-size: 15px;
+    }
+
+    .news__title {
+        font-size: 30px;
+    }
+    
+    .news__info {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .news {
+        width: 40%;
+        left: -31%;
+    }
+
+    .graph__block {
+        height: auto;
+    }
+}

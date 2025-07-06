@@ -73,7 +73,7 @@
                     </li>
                     <li class="header__item">
                         <div class="header__button-wrapper" style="position: relative; display: inline-block;">
-                            <button data-metal="ferrum" class="header__button btn-reset btn-flex">
+                            <button data-metal="silver" class="header__button btn-reset btn-flex">
                                 <svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <g clip-path="url(#clip0_37_350)">
                                         <path d="M4.70644 15.6765L36.1817 15.6765L40.4441 8.1488L0.444092 8.1488L4.70644 15.6765Z" fill="#888888"/>
@@ -98,7 +98,7 @@
                                     </defs>
                                 </svg>
                                 <span>
-                                    Ferrum
+                                    Silver
                                 </span>
                             </button>
                             <svg class="header__button-border" width="220" height="50" viewBox="0 0 220 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;pointer-events:none;z-index:3;">
@@ -150,7 +150,7 @@
             <section class="news">
                 <div class="swiper">
                     <h2 class="news__title">
-                        News
+                        <span class="news__title--metal">GOLD</span> News
                     </h2>
                     <div class="swiper-wrapper">
                         <div class="swiper-slide">
@@ -193,7 +193,7 @@
                                 </p>
                             </div>
                         </div>
-                    </div>
+                    </div> 
                     <div class="swiper-button-prev">
                         <svg width="11" height="16" viewBox="0 0 11 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M10 15L1 8L10 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -225,17 +225,17 @@
                             </button>
                         </li>
                         <li class="graph__item">
-                            <button data-interval="week" class="graph__button graph__button--disabled btn-reset" disabled>
+                            <button data-interval="week" class="graph__button graph__button--disabled btn-reset">
                                 Week
                             </button>
                         </li>
                         <li class="graph__item">
-                            <button data-interval="month" class="graph__button graph__button--disabled btn-reset" disabled>
+                            <button data-interval="month" class="graph__button graph__button--disabled btn-reset">
                                 Month
                             </button>
                         </li>
                         <li class="graph__item last-item">
-                            <button data-interval="year" class="graph__button graph__button--disabled btn-reset" disabled>
+                            <button data-interval="year" class="graph__button graph__button--disabled btn-reset">
                                 Year
                             </button>
                         </li>
@@ -266,5 +266,7 @@
 </body>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+<script src="https://unpkg.com/tippy.js@6"></script>
 <script src="js/script.js"></script>
 </html>

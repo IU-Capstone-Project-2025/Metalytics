@@ -92,6 +92,7 @@ span {
 }
 
 .header__logo {
+	width: 30%;
     margin-top: 11px;
     align-items: center;
 }
@@ -106,9 +107,14 @@ span {
 }
 
 .header__metals {
-    width: 720px;
-    margin-left: 40px;
+    width: 70%;
     flex-direction: column;
+	justify-content: center;
+}
+
+.header__list {
+	width: 100%;
+	justify-content: center;
 }
 
 .header__title {
@@ -120,7 +126,7 @@ span {
 }
 
 .header__item:not(:last-child) {
-    margin-right: auto;
+    margin-right: 45px;
 }
 
 .header__button {
@@ -218,7 +224,7 @@ span {
 /* News */
 
 .news {
-	width: 28.3%;
+	width: 30%;
 	min-height: 650px;
 }
 
@@ -231,6 +237,15 @@ span {
 .news__title {
 	margin-bottom: 20px;
     text-align: center;
+	font-weight: 500;
+	font-size: 36px;
+	line-height: 100%;
+	letter-spacing: 0;
+	color: var(--white);
+}
+
+.news__title--metal {
+	text-align: center;
 	font-weight: 500;
 	font-size: 36px;
 	line-height: 100%;
@@ -286,8 +301,17 @@ span {
 	color: var(--white);
 }
 
+.graph__button--disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
 .last-item {
 	margin-right: auto;
+}
+
+.graph__block {
+	height: 530px;
 }
 
 /* Report */

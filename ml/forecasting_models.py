@@ -505,41 +505,6 @@ class ClosePriceFM(ForecastModel):
         df.loc[:, 'Close'] = df['Close'].diff()
         df = df.dropna()
 
-        # Day of Week (0=Monday, 6=Sunday)
-        df['day_of_week'] = df.index.dayofweek
-        df['day_of_week'] = pd.Categorical(df['day_of_week'], categories=range(7), ordered=True)
-
-        df['year'] = df.index.year
-        df['year'] = pd.Categorical(df['year'], categories=range(2023, 2026), ordered=True)
-
-        # Month (1-12)
-        month_index = df.index.month
-
-        # Cyclical encoding for months (12-month period)
-        df['month_sin'] = np.sin(2 * np.pi * month_index / 12)
-        df['month_cos'] = np.cos(2 * np.pi * month_index / 12)
-
-        # Season (1=Winter, 2=Spring, 3=Summer, 4=Fall)
-        df['season'] = (df.index.month % 12 + 3) // 3
-        df['season'] = pd.Categorical(df['season'], categories=range(1, 5), ordered=True)
-
-        # Weekend flag (1 if Saturday/Sunday, else 0)
-        df['is_weekend'] = df.index.dayofweek.isin([5, 6]).astype(int)
-
-        # Hour
-        hour_index = df.index.hour
-
-        # Cyclical encoding for hours (24h period)
-        df['hour_sin'] = np.sin(2 * np.pi * hour_index / 24)
-        df['hour_cos'] = np.cos(2 * np.pi * hour_index / 24)
-
-        # For cyclical features (day_of_week, season)
-        df = pd.get_dummies(df, columns=['day_of_week', 'season'], prefix=['dow', 'season'])
-
-        # Normalization
-        for feature in ['year', 'month_sin', 'month_cos', 'hour_sin', 'hour_cos']:
-            df[feature] = MinMaxScaler().fit_transform(df[[feature]])
-
         return df
 
     def build_forecast_data(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -564,41 +529,6 @@ class ClosePriceFM(ForecastModel):
 
         # Set `Close` price
         df.loc[:, 'Close'] = np.nan
-
-        # Day of Week (0=Monday, 6=Sunday)
-        df['day_of_week'] = df.index.dayofweek
-        df['day_of_week'] = pd.Categorical(df['day_of_week'], categories=range(7), ordered=True)
-
-        df['year'] = df.index.year
-        df['year'] = pd.Categorical(df['year'], categories=range(2023, 2026), ordered=True)
-
-        # Month (1-12)
-        month_index = df.index.month
-
-        # Cyclical encoding for months (12-month period)
-        df['month_sin'] = np.sin(2 * np.pi * month_index / 12)
-        df['month_cos'] = np.cos(2 * np.pi * month_index / 12)
-
-        # Season (1=Winter, 2=Spring, 3=Summer, 4=Fall)
-        df['season'] = (df.index.month % 12 + 3) // 3
-        df['season'] = pd.Categorical(df['season'], categories=range(1, 5), ordered=True)
-
-        # Weekend flag (1 if Saturday/Sunday, else 0)
-        df['is_weekend'] = df.index.dayofweek.isin([5, 6]).astype(int)
-
-        # Hour
-        hour_index = df.index.hour
-
-        # Cyclical encoding for hours (24h period)
-        df['hour_sin'] = np.sin(2 * np.pi * hour_index / 24)
-        df['hour_cos'] = np.cos(2 * np.pi * hour_index / 24)
-
-        # For cyclical features (day_of_week, season)
-        df = pd.get_dummies(df, columns=['day_of_week', 'season'], prefix=['dow', 'season'])
-
-        # Normalization
-        for feature in ['year', 'month_sin', 'month_cos', 'hour_sin', 'hour_cos']:
-            df[feature] = MinMaxScaler().fit_transform(df[[feature]])
 
         # Set Indicators
         for indicator in self.indicators:

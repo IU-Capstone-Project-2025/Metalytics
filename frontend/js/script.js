@@ -306,7 +306,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   newsButton.addEventListener('click', function(e) {
     e.stopPropagation();
-    newsSection.style.left = '0px';
+    newsSection.style.left = '12px';
   });
 
   document.addEventListener('click', function(e) {
@@ -448,11 +448,9 @@ function updateUI() {
 
   updateNewsContent();
   
-  // Update swiper height after UI changes
   setTimeout(setSwiperHeight, 100);
 }
 
-// --- Custom Select Dropdown Logic for Mobile ---
 function setupCustomSelects() {
   function closeAllSelects(except) {
     document.querySelectorAll('.custom-select').forEach(sel => {
@@ -465,7 +463,6 @@ function setupCustomSelects() {
     const options = select.querySelector('.custom-select__options');
     const optionItems = select.querySelectorAll('.custom-select__option');
 
-    // Open/close dropdown
     select.addEventListener('click', function(e) {
       e.stopPropagation();
       if (select.classList.contains('open')) {
@@ -476,25 +473,22 @@ function setupCustomSelects() {
       }
     });
 
-    // Option click
     optionItems.forEach(option => {
       option.addEventListener('click', function(e) {
         e.stopPropagation();
         if (option.classList.contains('custom-select__option--disabled')) return;
-        // Set selected text
         selected.textContent = option.textContent;
-        // Mark selected visually
         optionItems.forEach(opt => opt.classList.remove('selected'));
         option.classList.add('selected');
         select.classList.remove('open');
-        // Trigger change logic
+
         if (select.id === 'period-select') {
-          // Simulate button click for period
           const val = option.getAttribute('data-value');
           const btn = document.querySelector('.graph__button[data-interval="' + val + '"]');
           if (btn && !btn.classList.contains('graph__button--disabled')) btn.click();
-        } else if (select.id === 'type-select') {
-          // Simulate button click for type
+        } 
+        
+        else if (select.id === 'type-select') {
           const val = option.getAttribute('data-value');
           const btn = document.querySelector('.graph__button[data-select="' + val + '"]');
           if (btn) btn.click();
@@ -503,15 +497,12 @@ function setupCustomSelects() {
     });
   });
 
-  // Close dropdowns on outside click
   document.addEventListener('click', function() {
     closeAllSelects();
   });
 }
 
-// Keep selects in sync with button state
 function syncCustomSelects() {
-  // Period
   const periodBtn = document.querySelector('.graph__button.graph__button--active[data-interval]');
   if (periodBtn) {
     const val = periodBtn.getAttribute('data-interval');
@@ -526,7 +517,7 @@ function syncCustomSelects() {
       }
     }
   }
-  // Type
+
   const typeBtn = document.querySelector('.graph__button.active[data-select], .graph__button.graph__button--active[data-select]');
   if (typeBtn) {
     const val = typeBtn.getAttribute('data-select');
@@ -543,7 +534,6 @@ function syncCustomSelects() {
   }
 }
 
-// Patch: After button click, sync selects
 function patchButtonSync() {
   document.querySelectorAll('.graph__button').forEach(button => {
     button.addEventListener('click', () => {

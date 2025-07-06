@@ -212,6 +212,10 @@
         margin-bottom: 25px;
     }
 
+    .graph {
+        width: 90%;
+    }
+
     .graph__list {
         display: none !important;
     }
@@ -315,5 +319,15 @@
         opacity: 0.5;
         cursor: not-allowed;
         pointer-events: none;
+    }
+}
+
+@media (max-width: 400px) {
+    .header__logo-text {
+        display: none;
+    }
+
+    .header__logo {
+        width: 80%;
     }
 }

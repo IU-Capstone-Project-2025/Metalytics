@@ -345,9 +345,7 @@ span {
 	height: 530px;
 }
 
-/* Report */
-
-/* --- Custom Selects for Mobile --- */
+/* Custom Selects for Mobile*/
 .graph__selects {
   display: none;
 }

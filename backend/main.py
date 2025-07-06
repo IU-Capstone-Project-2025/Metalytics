@@ -35,7 +35,9 @@ def get_system_metrics() -> Dict[str, Any]:
 
 # Dictionary for metals from name to tags
 Metal_dict = {
-    "Gold": "GC=F",
+    "gold": "GC=F",
+    "silver": "SI=F",
+    "zinc": "ZINC-USD"
 }
 
 
@@ -56,7 +58,7 @@ async def metals_check():
 async def metal_historical_data(metal_id: str, period: str, interval="1d"):
     """
     Get a historical data.
-    - metal_id: Metal name - e.g. "Gold"
+    - metal_id: Metal name - e.g. "Gold", "Silver", "Zinc"
     - period: Time period - ["1h", "1d", "5d", "1mo", "3mo", "6mo",
     "1y", "2y", "5y", "10y", "ytd", "max"].
     - interval: Data interval - ["1m", "2m", "5m", "15m", "30m", "60m",
@@ -64,6 +66,7 @@ async def metal_historical_data(metal_id: str, period: str, interval="1d"):
     """
     try:
         is_period_1hour = False
+        metal_id = metal_id.lower()
 
         # Check input parameters
         if metal_id not in Metal_dict.keys():
@@ -179,10 +182,11 @@ async def metal_historical_data(metal_id: str, period: str, interval="1d"):
 async def metal_forecast(metal_id: str):
     """
     Get a metal price forecast for 1 day
-    - metal_id: Metal name - e.g. "Gold"
+    - metal_id: Metal name - e.g. "Gold", "Silver", "Zinc"
     """
 
     try:
+        metal_id = metal_id.lower()
 
         # Check input parameters
         if metal_id not in Metal_dict.keys():
@@ -240,13 +244,14 @@ async def metal_forecast(metal_id: str):
 async def metal_forcast_value_of_units(metal_id: str, unit="h", value=24):
     """
     Get a metal price forecast for value number of selected unit
-    - metal_id: Metal name - e.g. "Gold"
+    - metal_id: Metal name - e.g. "Gold", "Silver", "Zinc"
     - unit: hour, day or months - ['h', 'd', 'm']
     - value: value of units
     """
     value = int(value)
     print(f"value: {value}")
     try:
+        metal_id = metal_id.lower()
 
         # Check input parameters
         if metal_id not in Metal_dict.keys():
@@ -353,5 +358,6 @@ def get_package_version(package_name: str) -> str:
 
 
 # # delete it before push
+# import uvicorn
 # if __name__ == "__main__":
 #     uvicorn.run("main:app")

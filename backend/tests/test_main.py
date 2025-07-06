@@ -17,7 +17,7 @@ def test_metals():
 
 
 def test_historical_data():
-    response = client.get("/historical_data/Gold?period=1d&interval=1h")
+    response = client.get("/historical_data/Gold?period=1mo&interval=1d")
     assert response.status_code in (200, 404)
     if response.status_code == 200:
         assert isinstance(response.json(), list)

@@ -2,12 +2,10 @@ name: Backend CI
 
 on:
   pull_request:
-    paths:
-      - 'backend/**'
-      - '.github/workflows/ci.yml'
 
 jobs:
   test:
+    if: contains(github.event.pull_request.changed_files, 'backend/') || contains(github.event.pull_request.changed_files, '.github/workflows/ci.yml')
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -26,7 +24,9 @@ jobs:
         run: flake8 . --exclude=baseline_model,data,__pycache__
       - name: Run tests
         run: PYTHONPATH=. pytest --maxfail=1 --disable-warnings -v 
+
   docker:
+    if: contains(github.event.pull_request.changed_files, 'backend/') || contains(github.event.pull_request.changed_files, '.github/workflows/ci.yml')
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -42,4 +42,4 @@ jobs:
           curl --fail http://localhost:8000/health || (docker logs metalytics-backend-test && exit 1)
       - name: Cleanup
         if: always()
-        run: docker rm -f metalytics-backend-test || true 
+        run: docker rm -f metalytics-backend-test || true

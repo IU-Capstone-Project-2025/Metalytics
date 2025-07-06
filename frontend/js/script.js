@@ -191,7 +191,6 @@ document.addEventListener("DOMContentLoaded", () => {
     chart.data.datasets[0].data = prices;
     chart.update();
     
-    // Update swiper height after chart update
     setTimeout(setSwiperHeight, 100);
   }
 
@@ -219,7 +218,6 @@ document.addEventListener("DOMContentLoaded", () => {
     chart.data.datasets[0].backgroundColor = "rgba(0,0,255,0.1)";
     chart.update();
     
-    // Update swiper height after chart update
     setTimeout(setSwiperHeight, 100);
   }
 
@@ -300,7 +298,6 @@ document.addEventListener("DOMContentLoaded", () => {
   
   updateNewsContent();
   
-  // Set swiper height to match graph section
   setSwiperHeight();
 
   let newsButton = document.querySelector('.swiper-button-open');
@@ -323,7 +320,26 @@ document.addEventListener("DOMContentLoaded", () => {
     newsSection.style.left = '';
   });
   
-  // Add resize listener to update swiper height when window resizes
+  let burgerHeaderButton = document.querySelector('.header__burger');
+  let burgerHeaderClose = document.querySelector('.header__burger--close');
+  let burgerHeaderMenu = document.querySelector('.header__burger-block');
+
+  burgerHeaderButton.addEventListener('click', function(e) {
+    e.stopPropagation();
+    burgerHeaderMenu.style.left = '20%';
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!burgerHeaderMenu.contains(e.target)) {
+      burgerHeaderMenu.style.left = '';
+    }
+  });
+
+  burgerHeaderClose.addEventListener('click', function(e) {
+    e.stopPropagation();
+    burgerHeaderMenu.style.left = '';
+  });
+
   window.addEventListener('resize', setSwiperHeight);
 });
 
@@ -335,7 +351,6 @@ function setSwiperHeight() {
     const graphHeight = graphSection.offsetHeight;
     swiperElement.style.height = graphHeight + 'px';
     
-    // Update swiper if it exists
     if (swiper) {
       swiper.update();
     }

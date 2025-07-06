@@ -80,6 +80,7 @@ span {
 .container {
     max-width: 1756px;
     margin: 0 auto;
+	padding: 0;
 	flex-wrap: wrap;
 }
 
@@ -152,6 +153,25 @@ span {
     position: relative;
     font-size: 32px;
     color: var(--white);
+}
+
+.header__burger {
+	display: none;
+}
+
+.header__burger-block {
+	left: -200%;
+	position: absolute;
+	width: 500px;
+    height: 400px;
+	background-color: var(--swiper);
+	z-index: 11;
+}
+
+.header__burger--close {
+	position: absolute;
+	right: 25px;
+	top: 25px;
 }
 
 /* Main */

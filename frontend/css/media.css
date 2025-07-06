@@ -97,3 +97,118 @@
         height: auto;
     }
 }
+
+@media (max-width: 975px) {
+    .header__logo {
+        width: 60%;
+    }
+
+    .header__logo>svg {
+        width: 100px;
+        height: 100px;
+    }
+
+    .header__button>svg {
+        width: 39px;
+        height: 39px;
+    }
+
+    .header__logo-text {
+        height: 40px;
+        margin-top: 18px;
+    }
+
+    .header__button {
+        width: 200px;
+    }
+
+    .header__button>span {
+        font-size: 29px;
+    }
+
+    .main {
+        justify-content: end;
+    }
+    
+    .graph__block {
+        height: 57vh;
+    }
+
+    .graph {
+        width: 87%;
+    }
+
+    .graph__list {
+        margin-bottom: 5px;
+    }
+
+    #priceChart {
+        height: inherit !important;
+    }
+
+    .graph__title {
+        font-size: 35px;
+    }
+    
+    .graph__button {
+        width: 70px;
+        min-height: 35px;
+        font-size: 13px;
+    }
+
+    .swiper-button-next {
+        right: 28.3%;
+    }
+
+    .swiper-button-prev {
+        left: 30%;
+    }
+}
+
+@media (max-width: 768px) {
+    .header__logo {
+        width: 90%;
+    }
+
+    .header__metals {
+        display: none;
+    }
+
+    .header__burger {
+        display: block;
+        position: relative;
+        top: 10px;
+    }
+
+    .header>.container {
+        flex-direction: row;
+    }
+
+    .news {
+        width: 50%;
+        left: -41%;
+    }
+
+    .header__burger-metals {
+        position: relative;
+        flex-direction: column;
+        padding: 20px;
+    }
+
+    .header__list {
+        flex-direction: column;
+    }
+
+    .header__item:not(:last-child) {
+        margin-bottom: 25px;
+        margin-right: 0;
+    }
+
+    .header__item:nth-child(even) {
+        margin-left: auto;
+    }
+    
+    .header__title {
+        margin-bottom: 25px;
+    }
+}

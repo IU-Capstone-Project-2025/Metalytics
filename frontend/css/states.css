@@ -50,6 +50,10 @@
     background-color: var(--focus);
 }
 
+.header__burger-block {
+    transition: left 0.3s ease-in-out;
+}
+
 .news {
     transition: left 0.3s ease-in-out;
 }

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/base.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
     <link rel="stylesheet" type="text/css" href="css/normalize.css">
     <link rel="stylesheet" type="text/css" href="css/states.css">
     <link rel="stylesheet" type="text/css" href="css/style.css">
@@ -144,6 +146,135 @@
                     </li>
                 </ul>
             </div>
+
+            <button class="btn-reset header__burger">
+                <svg width="50px" height="50px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 18L20 18" stroke="#D3AC49" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M4 12L20 12" stroke="#D3AC49" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M4 6L20 6" stroke="#D3AC49" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+
+            <div class="header__burger-block">
+                <div class="header__burger-metals block-flex">
+                    <button class="btn-reset header__burger--close">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="4.5752" y="2.95406" width="24" height="3" rx="1.5" transform="rotate(45 4.5752 2.95406)" fill="#D3AC49"></rect>
+                            <rect x="21.5459" y="5.07538" width="24" height="3" rx="1.5" transform="rotate(135 21.5459 5.07538)" fill="#D3AC49"></rect>
+                        </svg>
+                    </button>
+                    <h2 class="header__title">
+                        Metals
+                    </h2>
+                    <ul class="header__list list-reset list-flex">
+                        <li class="header__item">
+                            <div class="header__button-wrapper" style="position: relative; display: inline-block;">
+                                <button data-metal="gold" class="header__button header__button--active btn-reset btn-flex">
+                                    <svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <g clip-path="url(#clip0_37_295)">
+                                            <path d="M4.70644 15.6765L36.1817 15.6765L40.4441 8.1488L0.444092 8.1488L4.70644 15.6765Z" fill="#EAAA28"/>
+                                            <path d="M6.33909 14.0438L0.444092 8.1488L0.444092 20.4441L7.97175 22.0768L6.33909 14.0438Z" fill="#CF8720"/>
+                                            <path d="M0.444092 20.4441L0.444092 32.7394L7.97175 26.8444L7.97175 20.4441H0.444092Z" fill="#EAAA28"/>
+                                            <path d="M34.5491 14.0438L32.9164 22.0768L40.4441 20.4441V8.1488L34.5491 14.0438Z" fill="#CF8720"/>
+                                            <path d="M32.9164 26.8444L40.4441 32.7394V20.4441H32.9164V26.8444Z" fill="#EAAA28"/>
+                                            <path d="M34.5491 20.4441V14.0438L6.33911 14.0438L6.33911 20.4441L20.4441 22.0768L34.5491 20.4441Z" fill="#F1CC40"/>
+                                            <path d="M6.33911 20.4441L6.33911 26.8444L20.4441 28.4771L34.5491 26.8444V20.4441L6.33911 20.4441Z" fill="#F7E997"/>
+                                            <path d="M6.33909 26.8444L0.444092 32.7394L40.4441 32.7394L34.5491 26.8444L6.33909 26.8444Z" fill="#F1CC40"/>
+                                            <path d="M9.32532 17.609V20.4441L10.5498 22.0768L11.7743 20.4441V17.609H9.32532Z" fill="#EAAA28"/>
+                                            <path d="M13.536 17.609V20.4441L14.7605 22.0768L15.9849 20.4441V17.609H13.536Z" fill="#EAAA28"/>
+                                            <path d="M29.1138 17.609V20.4441L30.3384 22.0768L31.5628 20.4441V17.609H29.1138Z" fill="#EAAA28"/>
+                                            <path d="M9.32574 20.444V23.2792H11.7747V20.444H9.32574Z" fill="#F1CC40"/>
+                                            <path d="M29.1135 20.444V23.2792H31.5625V20.444H29.1135Z" fill="#F1CC40"/>
+                                            <path d="M13.5364 20.444V23.2792H15.9854V20.444H13.5364Z" fill="#F1CC40"/>
+                                        </g>
+                                        <defs>
+                                            <clipPath id="clip0_37_295">
+                                                <rect width="40" height="40" fill="white" transform="matrix(0 -1 1 0 0.444092 40.4441)"/>
+                                            </clipPath>
+                                        </defs>
+                                    </svg>
+                                    <span>
+                                        Gold
+                                    </span>
+                                </button>
+                                <svg class="header__button-border" width="220" height="50" viewBox="0 0 220 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;pointer-events:none;z-index:3;">
+                                    <rect x="1.5" y="1.5" width="217" height="47" rx="24" stroke="#EAAA28" stroke-width="3" fill="none"/>
+                                </svg>
+                            </div>
+                        </li>
+                        <li class="header__item">
+                            <div class="header__button-wrapper" style="position: relative; display: inline-block;">
+                                <button data-metal="silver" class="header__button btn-reset btn-flex">
+                                    <svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <g clip-path="url(#clip0_37_350)">
+                                            <path d="M4.70644 15.6765L36.1817 15.6765L40.4441 8.1488L0.444092 8.1488L4.70644 15.6765Z" fill="#888888"/>
+                                            <path d="M6.33909 14.0438L0.444092 8.1488L0.444092 20.4441L7.97175 22.0768L6.33909 14.0438Z" fill="#555555"/>
+                                            <path d="M0.444092 20.4441L0.444092 32.7394L7.97175 26.8444L7.97175 20.4441H0.444092Z" fill="#888888"/>
+                                            <path d="M34.5491 14.0438L32.9164 22.0768L40.4441 20.4441V8.1488L34.5491 14.0438Z" fill="#555555"/>
+                                            <path d="M32.9164 26.8444L40.4441 32.7394V20.4441H32.9164V26.8444Z" fill="#888888"/>
+                                            <path d="M34.5491 20.4441V14.0438L6.33911 14.0438L6.33911 20.4441L20.4441 22.0768L34.5491 20.4441Z" fill="#AAAAAA"/>
+                                            <path d="M6.33911 20.4441L6.33911 26.8444L20.4441 28.4771L34.5491 26.8444V20.4441L6.33911 20.4441Z" fill="#DDDDDD"/>
+                                            <path d="M6.33909 26.8444L0.444092 32.7394L40.4441 32.7394L34.5491 26.8444L6.33909 26.8444Z" fill="#AAAAAA"/>
+                                            <path d="M9.32532 17.609V20.4441L10.5498 22.0768L11.7743 20.4441V17.609H9.32532Z" fill="#888888"/>
+                                            <path d="M13.536 17.609V20.4441L14.7605 22.0768L15.9849 20.4441V17.609H13.536Z" fill="#888888"/>
+                                            <path d="M29.1138 17.609V20.4441L30.3384 22.0768L31.5628 20.4441V17.609H29.1138Z" fill="#888888"/>
+                                            <path d="M9.32574 20.444V23.2792H11.7747V20.444H9.32574Z" fill="#AAAAAA"/>
+                                            <path d="M29.1135 20.444V23.2792H31.5625V20.444H29.1135Z" fill="#AAAAAA"/>
+                                            <path d="M13.5364 20.444V23.2792H15.9854V20.444H13.5364Z" fill="#AAAAAA"/>
+                                        </g>
+                                        <defs>
+                                            <clipPath id="clip0_37_350">
+                                                <rect width="40" height="40" fill="white" transform="matrix(0 -1 1 0 0.444092 40.4441)"/>
+                                            </clipPath>
+                                        </defs>
+                                    </svg>
+                                    <span>
+                                        Silver
+                                    </span>
+                                </button>
+                                <svg class="header__button-border" width="220" height="50" viewBox="0 0 220 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;pointer-events:none;z-index:3;">
+                                    <rect x="1.5" y="1.5" width="217" height="47" rx="24" stroke="#888888" stroke-width="3" fill="none"/>
+                                </svg>
+                            </div>
+                        </li>
+                        <li class="header__item">
+                            <div class="header__button-wrapper" style="position: relative; display: inline-block;">
+                                <button data-metal="zinc" class="header__button btn-reset btn-flex">
+                                    <svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <g clip-path="url(#clip0_37_368)">
+                                            <path d="M4.70644 15.6765L36.1817 15.6765L40.4441 8.1488L0.444092 8.1488L4.70644 15.6765Z" fill="#C4C4C4"/>
+                                            <path d="M6.33909 14.0438L0.444092 8.1488L0.444092 20.4441L7.97175 22.0768L6.33909 14.0438Z" fill="#AAAAAA"/>
+                                            <path d="M0.444092 20.4441L0.444092 32.7394L7.97175 26.8444L7.97175 20.4441H0.444092Z" fill="#C4C4C4"/>
+                                            <path d="M34.549 14.0438L32.9164 22.0768L40.444 20.4441V8.1488L34.549 14.0438Z" fill="#AAAAAA"/>
+                                            <path d="M32.9164 26.8444L40.444 32.7394V20.4441H32.9164V26.8444Z" fill="#C4C4C4"/>
+                                            <path d="M34.5491 20.4441V14.0438L6.33911 14.0438L6.33911 20.4441L20.4441 22.0768L34.5491 20.4441Z" fill="#E3E3E3"/>
+                                            <path d="M6.33911 20.4441L6.33911 26.8444L20.4441 28.4771L34.5491 26.8444V20.4441L6.33911 20.4441Z" fill="white"/>
+                                            <path d="M6.33909 26.8444L0.444092 32.7394L40.4441 32.7394L34.5491 26.8444L6.33909 26.8444Z" fill="#E3E3E3"/>
+                                            <path d="M9.32532 17.609V20.4441L10.5498 22.0768L11.7743 20.4441V17.609H9.32532Z" fill="#C4C4C4"/>
+                                            <path d="M13.536 17.609V20.4441L14.7605 22.0768L15.9849 20.4441V17.609H13.536Z" fill="#C4C4C4"/>
+                                            <path d="M29.1139 17.609V20.4441L30.3384 22.0768L31.5629 20.4441V17.609H29.1139Z" fill="#C4C4C4"/>
+                                            <path d="M9.32568 20.444V23.2792H11.7747V20.444H9.32568Z" fill="#E3E3E3"/>
+                                            <path d="M29.1134 20.444V23.2792H31.5624V20.444H29.1134Z" fill="#E3E3E3"/>
+                                            <path d="M13.5363 20.444V23.2792H15.9852V20.444H13.5363Z" fill="#E3E3E3"/>
+                                        </g>
+                                        <defs>
+                                            <clipPath id="clip0_37_368">
+                                                <rect width="40" height="40" fill="white" transform="matrix(0 -1 1 0 0.444092 40.4441)"/>
+                                            </clipPath>
+                                        </defs>
+                                    </svg>
+                                    <span>
+                                        Zinc
+                                    </span>
+                                </button>
+                                <svg class="header__button-border" width="220" height="50" viewBox="0 0 220 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;pointer-events:none;z-index:3;">
+                                    <rect x="1.5" y="1.5" width="217" height="47" rx="24" stroke="#C4C4C4" stroke-width="3" fill="none"/>
+                                </svg>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </header>
     <main class="main">
@@ -283,5 +414,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://unpkg.com/@popperjs/core@2"></script>
 <script src="https://unpkg.com/tippy.js@6"></script>
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 <script src="js/script.js"></script>
 </html>

@@ -211,4 +211,109 @@
     .header__title {
         margin-bottom: 25px;
     }
+
+    .graph__list {
+        display: none !important;
+    }
+    
+    .graph__selects {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 10px;
+        justify-content: space-between;
+    }
+
+    .custom-select-wrapper {
+        position: relative;
+        width: 140px;
+    }
+
+    .custom-select {
+        background: var(--chartsBack);
+        border-radius: 8px;
+        position: relative;
+        cursor: pointer;
+        min-height: 38px;
+        color: var(--white);
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        user-select: none;
+        border: 1px solid var(--borderColor);
+        justify-content: space-between;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .custom-select.open {
+        border-color: var(--main);
+        box-shadow: 0 2px 8px rgba(211,172,73,0.15);
+    }
+
+    .custom-select__selected {
+        flex: 1;
+        padding: 8px 0;
+        color: var(--white);
+    }
+
+    .custom-select__arrow {
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 8px;
+        transition: transform 0.3s;
+    }
+
+    .custom-select.open .custom-select__arrow {
+        transform: rotate(180deg);
+    }
+
+    .custom-select__arrow img {
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+
+    .custom-select__options {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: var(--primary);
+        border: 1px solid var(--main);
+        border-radius: 0 0 8px 8px;
+        z-index: 10;
+        box-shadow: 0 2px 8px rgba(211,172,73,0.15);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .custom-select.open .custom-select__options {
+        display: block;
+        z-index: 0;
+    }
+
+    .custom-select__option {
+        padding: 10px 16px;
+        cursor: pointer;
+        color: var(--white);
+        transition: background 0.2s, color 0.2s;
+        background: none;
+    }
+
+    .custom-select__option:hover:not(.custom-select__option--disabled),
+    .custom-select__option.selected {
+        background: var(--main);
+        color: var(--black);
+    }
+
+    .custom-select__option--disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
 }

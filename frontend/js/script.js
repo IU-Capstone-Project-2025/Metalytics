@@ -341,6 +341,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   window.addEventListener('resize', setSwiperHeight);
+
+  setupCustomSelects();
+  syncCustomSelects();
+  patchButtonSync();
 });
 
 function setSwiperHeight() {
@@ -446,4 +450,104 @@ function updateUI() {
   
   // Update swiper height after UI changes
   setTimeout(setSwiperHeight, 100);
+}
+
+// --- Custom Select Dropdown Logic for Mobile ---
+function setupCustomSelects() {
+  function closeAllSelects(except) {
+    document.querySelectorAll('.custom-select').forEach(sel => {
+      if (sel !== except) sel.classList.remove('open');
+    });
+  }
+
+  document.querySelectorAll('.custom-select').forEach(select => {
+    const selected = select.querySelector('.custom-select__selected');
+    const options = select.querySelector('.custom-select__options');
+    const optionItems = select.querySelectorAll('.custom-select__option');
+
+    // Open/close dropdown
+    select.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (select.classList.contains('open')) {
+        select.classList.remove('open');
+      } else {
+        closeAllSelects(select);
+        select.classList.add('open');
+      }
+    });
+
+    // Option click
+    optionItems.forEach(option => {
+      option.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (option.classList.contains('custom-select__option--disabled')) return;
+        // Set selected text
+        selected.textContent = option.textContent;
+        // Mark selected visually
+        optionItems.forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+        select.classList.remove('open');
+        // Trigger change logic
+        if (select.id === 'period-select') {
+          // Simulate button click for period
+          const val = option.getAttribute('data-value');
+          const btn = document.querySelector('.graph__button[data-interval="' + val + '"]');
+          if (btn && !btn.classList.contains('graph__button--disabled')) btn.click();
+        } else if (select.id === 'type-select') {
+          // Simulate button click for type
+          const val = option.getAttribute('data-value');
+          const btn = document.querySelector('.graph__button[data-select="' + val + '"]');
+          if (btn) btn.click();
+        }
+      });
+    });
+  });
+
+  // Close dropdowns on outside click
+  document.addEventListener('click', function() {
+    closeAllSelects();
+  });
+}
+
+// Keep selects in sync with button state
+function syncCustomSelects() {
+  // Period
+  const periodBtn = document.querySelector('.graph__button.graph__button--active[data-interval]');
+  if (periodBtn) {
+    const val = periodBtn.getAttribute('data-interval');
+    const select = document.getElementById('period-select');
+    if (select) {
+      const selected = select.querySelector('.custom-select__selected');
+      const option = select.querySelector('.custom-select__option[data-value="' + val + '"]');
+      if (option) {
+        selected.textContent = option.textContent;
+        select.querySelectorAll('.custom-select__option').forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+      }
+    }
+  }
+  // Type
+  const typeBtn = document.querySelector('.graph__button.active[data-select], .graph__button.graph__button--active[data-select]');
+  if (typeBtn) {
+    const val = typeBtn.getAttribute('data-select');
+    const select = document.getElementById('type-select');
+    if (select) {
+      const selected = select.querySelector('.custom-select__selected');
+      const option = select.querySelector('.custom-select__option[data-value="' + val + '"]');
+      if (option) {
+        selected.textContent = option.textContent;
+        select.querySelectorAll('.custom-select__option').forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+      }
+    }
+  }
+}
+
+// Patch: After button click, sync selects
+function patchButtonSync() {
+  document.querySelectorAll('.graph__button').forEach(button => {
+    button.addEventListener('click', () => {
+      setTimeout(syncCustomSelects, 0);
+    });
+  });
 }

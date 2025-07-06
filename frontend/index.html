@@ -359,6 +359,7 @@
                     GOLD
                 </h2>
                 <div class="graph__period">
+                    <!-- Desktop: Button List -->
                     <ul class="graph__list list-reset list-flex">
                         <li class="graph__item">
                             <button data-interval="hour" class="graph__button btn-reset">
@@ -396,6 +397,36 @@
                             </button>
                         </li>
                     </ul>
+                    <!-- Mobile: Custom Selects -->
+                    <div class="graph__selects">
+                        <div class="custom-select-wrapper">
+                            <div class="custom-select" id="period-select">
+                                <div class="custom-select__selected">Day</div>
+                                <div class="custom-select__arrow">
+                                    <img src="img/arrow.svg" alt="arrow" />
+                                </div>
+                                <ul class="custom-select__options">
+                                    <li class="custom-select__option" data-value="hour">Hour</li>
+                                    <li class="custom-select__option" data-value="day">Day</li>
+                                    <li class="custom-select__option custom-select__option--disabled" data-value="week">Week</li>
+                                    <li class="custom-select__option custom-select__option--disabled" data-value="month">Month</li>
+                                    <li class="custom-select__option custom-select__option--disabled" data-value="year">Year</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="custom-select-wrapper">
+                            <div class="custom-select" id="type-select">
+                                <div class="custom-select__selected">Historical</div>
+                                <div class="custom-select__arrow">
+                                    <img src="img/arrow.svg" alt="arrow" />
+                                </div>
+                                <ul class="custom-select__options">
+                                    <li class="custom-select__option" data-value="historical">Historical</li>
+                                    <li class="custom-select__option" data-value="predicted">Predicted</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="graph__block">
                     <canvas id="priceChart"></canvas>
@@ -415,5 +446,6 @@
 <script src="https://unpkg.com/@popperjs/core@2"></script>
 <script src="https://unpkg.com/tippy.js@6"></script>
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/script.js"></script>
 </html>

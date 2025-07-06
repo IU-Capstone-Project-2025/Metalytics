@@ -346,3 +346,8 @@ span {
 }
 
 /* Report */
+
+/* --- Custom Selects for Mobile --- */
+.graph__selects {
+  display: none;
+}

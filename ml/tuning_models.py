@@ -102,8 +102,8 @@ class TuneLSTM(Tuner):
     iters: int = 10
 
     bounds = (
-        np.array([0.0001, 16, 16, 16, 0.1]),  # min values
-        np.array([0.1, 256, 256, 256, 0.5])        # max values
+        np.array([0.0001, 16, 16, 16, 0.1, 5]),  # min values
+        np.array([0.1, 256, 256, 256, 0.5, 80])        # max values
     )
 
     K = 20
@@ -128,7 +128,8 @@ class TuneLSTM(Tuner):
                     "layer1": int(param_set[1]),
                     "layer2": int(param_set[2]),
                     "layer3": int(param_set[3]),
-                    "dropout": param_set[4]
+                    "dropout": param_set[4],
+                    "lags": int(param_set[5])
                 }
 
                 scores.append(self.model.cross_validation(self.df, params, self.K, self.test_size, self.metric))
@@ -149,7 +150,8 @@ class TuneLSTM(Tuner):
             "layer1": int(best_params[1]),
             "layer2": int(best_params[2]),
             "layer3": int(best_params[3]),
-            "dropout": best_params[4]
+            "dropout": best_params[4],
+            "lags": int(best_params[5])
         }
 
         return optimized_params

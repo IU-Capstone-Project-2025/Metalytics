@@ -6,6 +6,7 @@ on:
 
 jobs:
   check-description:
+    name: check-description
     runs-on: ubuntu-latest
     steps:
       - name: Check if PR has a description

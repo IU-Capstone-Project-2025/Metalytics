@@ -380,7 +380,7 @@ def get_package_version(package_name: str) -> str:
         return "N/A"
 
 
-# delete it before push
-import uvicorn
-if __name__ == "__main__":
-    uvicorn.run("main:app")
+# # delete it before push
+# import uvicorn
+# if __name__ == "__main__":
+#     uvicorn.run("main:app")

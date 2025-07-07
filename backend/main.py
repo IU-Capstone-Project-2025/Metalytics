@@ -9,6 +9,7 @@ import os
 import psutil
 import pkg_resources
 import pandas as pd
+import json
 
 
 app = FastAPI()
@@ -53,6 +54,28 @@ async def metals_check():
     """
     return {"available_metals": [key for key in Metal_dict.keys()]}
 
+@app.get("/news/{metal_id}")
+async def metals_news(metal_id:str):
+    """
+    Get a news for selected meatal:
+    - metal_id: Metal name - e.g. "Gold", "Silver", "Zinc"
+    """
+    try:
+        metal_id = metal_id.lower()
+        if metal_id not in Metal_dict.keys():
+            raise HTTPException(
+                status_code=404, detail="No matches for this metal"
+            )
+        with open('data/metalinfo_news.json') as f:
+            d = [x for x in json.load(f) if x['keyword'] == metal_id.lower()]
+        if not len(d):
+            raise HTTPException(
+            status_code=404, detail="No news for this metal"
+            )
+        return d
+    
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/historical_data/{metal_id}")
 async def metal_historical_data(metal_id: str, period: str, interval="1d"):

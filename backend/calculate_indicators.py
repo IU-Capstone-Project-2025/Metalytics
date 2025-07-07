@@ -1,8 +1,13 @@
 import pandas as pd
 import ta
+import os
 
 input_path = "gold_futures_yahoo_1h.csv"
 output_path = "gold_futures_with_indicators.csv"
+directory = "data"
+os.makedirs(directory, exist_ok=True)
+output_path = os.path.join(directory, output_path)
+
 
 df = pd.read_csv(input_path, skiprows=3, index_col=0, parse_dates=True)
 

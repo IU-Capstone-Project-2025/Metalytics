@@ -320,14 +320,44 @@
         cursor: not-allowed;
         pointer-events: none;
     }
+
+    .graph__block {
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+    }
+    
+    .graph__block canvas {
+        min-width: 800px;
+    }
 }
 
-@media (max-width: 400px) {
-    .header__logo-text {
-        display: none;
+@media (max-width: 565px) {
+    .news {
+        width: 63%;
+        left: -55%;
     }
 
+    .header__burger-block {
+        width: 385px;
+    }
+    
     .header__logo {
         width: 80%;
+    }
+
+    .header__logo-text {
+        width: 288px;
+        height: 30px;
+        margin-left: 10px;
+    }
+
+    .header__logo>svg {
+        width: 80px;
+        height: 80px;
+    }
+
+    .graph__block canvas {
+        min-width: 1200px;
     }
 }

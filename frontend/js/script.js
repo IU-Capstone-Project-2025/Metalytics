@@ -99,6 +99,62 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentSelect = "historical";
   const ctx = document.getElementById("priceChart").getContext("2d");
 
+  function getLegendDisplay() {
+    return window.innerWidth > 768;
+  }
+
+  function getXAxisOptions() {
+    if (window.innerWidth <= 768) {
+      return {
+        ticks: {
+          display: false
+        }
+      };
+    } else {
+      return {
+        ticks: {
+          maxRotation: 45,
+          minRotation: 30,
+          callback: function(value, index, values) {
+            const label = this.getLabelForValue(value);
+            let dateObj = new Date(label);
+            if (isNaN(dateObj)) return label;
+            let day = String(dateObj.getDate()).padStart(2, '0');
+            let month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            let year = String(dateObj.getFullYear()).slice(-2);
+            let hours = String(dateObj.getHours()).padStart(2, '0');
+            let minutes = String(dateObj.getMinutes()).padStart(2, '0');
+            return `${day}.${month}.${year}, ${hours}:${minutes}`;
+          }
+        }
+      };
+    }
+  }
+
+  function shortNumberFormat(num) {
+    if (Math.abs(num) >= 1e6) return (num / 1e6).toFixed(1) + 'M';
+    if (Math.abs(num) >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+    return num.toFixed(1);
+  }
+
+  function getYAxisOptions() {
+    if (window.innerWidth <= 768) {
+      return {
+        ticks: {
+          display: false
+        }
+      };
+    } else {
+      return {
+        ticks: {
+          callback: function(value) {
+            return shortNumberFormat(value);
+          }
+        }
+      };
+    }
+  }
+
   const chart = new Chart(ctx, {
     type: "line",
     data: {
@@ -114,18 +170,26 @@ document.addEventListener("DOMContentLoaded", () => {
     },
     options: {
       responsive: true,
-      scales: {
-        x: {
-          ticks: {
-            maxRotation: 45,
-            minRotation: 30
-          }
-        },
-        y: {
-          beginAtZero: false
+      plugins: {
+        legend: {
+          display: getLegendDisplay()
         }
+      },
+      scales: {
+        x: getXAxisOptions(),
+        y: getYAxisOptions()
       }
     }
+  });
+
+  window.addEventListener('resize', function() {
+    const shouldShowLegend = getLegendDisplay();
+    if (chart.options.plugins.legend.display !== shouldShowLegend) {
+      chart.options.plugins.legend.display = shouldShowLegend;
+    }
+    chart.options.scales.x = getXAxisOptions();
+    chart.options.scales.y = getYAxisOptions();
+    chart.update();
   });
 
   const periodToInterval = {

@@ -32,3 +32,4 @@ df["MACD_Hist"] = macd.macd_diff()
 
 df.to_csv(output_path)
 print(f" Сохранение в {output_path}")
+print("Test")

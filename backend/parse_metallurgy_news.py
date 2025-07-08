@@ -10,7 +10,9 @@ def parse_metalinfo_news(page_url, metal_list):
     try:
         news_list = []
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'+
+            ' AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.447'+
+            '2.124 Safari/537.36'
         }
         response = requests.get(page_url, headers=headers)
         response.raise_for_status()
@@ -22,31 +24,31 @@ def parse_metalinfo_news(page_url, metal_list):
                 if keyword.lower() in block.get_text().lower():
                     news_item = {
                         'title': block.find(
-                            'h2', 
+                            'h2',
                             class_='news-title'
                         ).get_text(strip=True) if block.find(
-                            'h2', 
+                            'h2',
                             class_='news-title'
                         ) else None,
                         'url': "https://www.metalinfo.ru/" + block.find(
-                            'a', 
+                            'a',
                             href=True
                         )['href'] if block.find(
-                            'a', 
+                            'a',
                             href=True
                         )['href'] else None,
                         'date': block.find(
-                            'small', 
+                            'small',
                             class_='news-date'
                         ).get_text(strip=True) if block.find(
-                            'small', 
+                            'small',
                             class_='news-date'
                         ) else None,
                         'preview': block.find(
-                            'div', 
+                            'div',
                             class_='news-annotation clearfix'
                         ).get_text(strip=True) if block.find(
-                            'div', 
+                            'div',
                             class_='news-annotation clearfix'
                         ) else None,
                         'keyword': keyword,

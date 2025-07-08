@@ -57,6 +57,7 @@
 
     .news__info {
         width: 100%;
+        font-size: 20px;
     }
 
     .news__date {

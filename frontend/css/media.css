@@ -103,6 +103,10 @@
         width: 60%;
     }
 
+    .news__info {
+        font-size: 16px;
+    }
+
     .header__logo>svg {
         width: 100px;
         height: 100px;
@@ -360,6 +364,10 @@
     .graph__block canvas {
         min-width: 1200px;
     }
+
+    .news__info {
+        font-size: 17px;
+    }
 }
 
 @media (max-width: 475px) {
@@ -406,5 +414,40 @@
 
     .graph__block {
         height: 48vh;
+    }
+
+    .news {
+        width: 98%;
+        left: -87%;
+    }
+
+    .news__date {
+        right: 28%;
+        font-size: 12px;
+    }
+
+    .swiper-button-prev {
+        left: 31%;
+    }
+
+    .swiper-button-next {
+        right: 31.3%;
+    }
+
+    .header__logo {
+        margin-right: auto;
+    }
+
+    .header {
+        padding: 0 15px;
+        padding-top: 30px;
+    }
+
+    .header__title {
+        font-size: 40px;
+    }
+
+    .header__button {
+        width: 180px;
     }
 }

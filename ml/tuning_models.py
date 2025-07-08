@@ -39,8 +39,8 @@ class TuneXGBoost(Tuner):
     iters: int = 10
 
     bounds = (
-        np.array([0.01, 3, 0.1, 0.1, 0.1, 0]),  # min values
-        np.array([0.3, 10, 10, 1, 1, 5])        # max values
+        np.array([10, 0.01, 3, 0.1, 0.1, 0.1, 0]),  # min values
+        np.array([5000, 0.3, 10, 10, 1, 1, 5])        # max values
     )
 
     K = 20
@@ -61,12 +61,13 @@ class TuneXGBoost(Tuner):
             scores = []
             for param_set in params_list:
                 params = {
-                    "learning_rate": param_set[0],
-                    "max_depth": int(param_set[1]),
-                    "min_child_weight": param_set[2],
-                    "subsample": param_set[3],
-                    "colsample_bytree": param_set[4],
-                    "gamma": param_set[5]
+                    "n_estimators": param_set[0],
+                    "learning_rate": param_set[1],
+                    "max_depth": int(param_set[2]),
+                    "min_child_weight": param_set[3],
+                    "subsample": param_set[4],
+                    "colsample_bytree": param_set[5],
+                    "gamma": param_set[6]
                 }
 
                 scores.append(self.model.cross_validation(self.df, params, self.K, self.test_size, self.metric))
@@ -83,12 +84,13 @@ class TuneXGBoost(Tuner):
         best_cost, best_params = optimizer.optimize(objective_function, iters=self.iters)
 
         optimized_params = {
-            'learning_rate': best_params[0],
-            'max_depth': int(best_params[1]),
-            'min_child_weight': best_params[2],
-            'subsample': best_params[3],
-            'colsample_bytree': best_params[4],
-            'gamma': best_params[5]
+            "n_estimators": best_params[0],
+            'learning_rate': best_params[1],
+            'max_depth': int(best_params[2]),
+            'min_child_weight': best_params[3],
+            'subsample': best_params[4],
+            'colsample_bytree': best_params[5],
+            'gamma': best_params[6]
         }
 
         return optimized_params

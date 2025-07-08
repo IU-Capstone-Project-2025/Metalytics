@@ -5,6 +5,7 @@ from datetime import datetime
 import time
 import os
 
+
 def parse_metalinfo_news(page_url, metal_list):
     try:
         news_list = []
@@ -20,13 +21,39 @@ def parse_metalinfo_news(page_url, metal_list):
             for block in news_blocks:
                 if keyword.lower() in block.get_text().lower():
                     news_item = {
-                        'title': block.find('h2', class_='news-title').get_text(strip=True) if block.find('h2', class_='news-title') else None,
-                        'url' : "https://www.metalinfo.ru/" + block.find('a', href=True)['href'] if block.find('a', href=True)['href'] else None,
-                        'date': block.find('small', class_='news-date').get_text(strip=True) if block.find('small', class_='news-date') else None,
-                        'preview': block.find('div', class_='news-annotation clearfix').get_text(strip=True) if block.find('div', class_='news-annotation clearfix') else None,
+                        'title': block.find(
+                            'h2', 
+                            class_='news-title'
+                        ).get_text(strip=True) if block.find(
+                            'h2', 
+                            class_='news-title'
+                        ) else None,
+                        'url': "https://www.metalinfo.ru/" + block.find(
+                            'a', 
+                            href=True
+                        )['href'] if block.find(
+                            'a', 
+                            href=True
+                        )['href'] else None,
+                        'date': block.find(
+                            'small', 
+                            class_='news-date'
+                        ).get_text(strip=True) if block.find(
+                            'small', 
+                            class_='news-date'
+                        ) else None,
+                        'preview': block.find(
+                            'div', 
+                            class_='news-annotation clearfix'
+                        ).get_text(strip=True) if block.find(
+                            'div', 
+                            class_='news-annotation clearfix'
+                        ) else None,
                         'keyword': keyword,
                         'source': page_url,
-                        'scraped_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        'scraped_at': datetime.now().strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        )
                     }
                     news_list.append(news_item)
 
@@ -35,6 +62,7 @@ def parse_metalinfo_news(page_url, metal_list):
     except Exception as e:
         print(f"Произошла ошибка: {e}")
         return []
+
 
 def save_to_json(data, filename='metalinfo_news.json'):
     try:
@@ -46,6 +74,7 @@ def save_to_json(data, filename='metalinfo_news.json'):
         print(f"Данные успешно сохранены в файл {filepath}")
     except Exception as e:
         print(f"Ошибка при сохранении в JSON: {e}")
+
 
 # URL для парсинга
 url = "https://www.metalinfo.ru/en/news/list.html?pn="

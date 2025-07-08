@@ -5,6 +5,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolu
 import os
 from forecasting_models import ForecastModel, ClosePriceFM
 from data_loader import GoldDataLoader
+from filter import SGFilter
 
 
 class ForecastFramework:
@@ -20,6 +21,7 @@ class ForecastFramework:
     train_set: pd.DataFrame
     test_set: pd.DataFrame
     forecast_model: ForecastModel
+    filter: SGFilter
 
     def __init__(
             self,
@@ -29,11 +31,18 @@ class ForecastFramework:
             name="baseline_model",
             train_size=0.7
     ):
-        self.df = data_loader.load_data()
+        self.df = data_loader.load_data().asfreq('30min').bfill().ffill()
+        self.filter = SGFilter()
+        self.df = self.filter.filter(self.df)
+
         self.target_columns = target_columns
 
-        train_size = int(len(self.df) * train_size)
-        self.train_set, self.test_set = self.df.iloc[:train_size], self.df.iloc[train_size:]
+        if (train_size == 1):
+            self.train_set = self.df
+            self.test_set = None
+        else:
+            train_size = int(len(self.df) * train_size)
+            self.train_set, self.test_set = self.df.iloc[:train_size], self.df.iloc[train_size:]
 
         self.forecast_model = forecast_model
         self.name = name
@@ -53,6 +62,8 @@ class ForecastFramework:
         """
         Evaluates model on the test set.
         """
+        if (self.test_set is None):
+            raise ValueError("No test set were provided")
         forecast_values = self.forecast_model.predict(self.test_set.index).to_numpy().reshape(-1)
         true_values = self.test_set[self.target_columns].to_numpy()
         results = dict(keys=metric_funcs.keys())
@@ -64,6 +75,8 @@ class ForecastFramework:
         """
         Plots forecasted data on the test interval as well as the true values.
         """
+        if (self.test_set is None):
+            raise ValueError("No test set were provided")
         forecast_values = self.forecast_model.predict(self.test_set.index).to_numpy().reshape(-1)
         true_values = self.test_set[self.target_columns].to_numpy()
 

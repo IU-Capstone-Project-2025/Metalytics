@@ -142,7 +142,7 @@ class SLFM(ForecastModel):
 
     def build(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
-        prices_reindexed = df[self.feature_name].asfreq('h')
+        prices_reindexed = df[self.feature_name]
         return prices_reindexed
 
     def build_forecast_data(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -380,6 +380,7 @@ class VolumeFM(ForecastModel):
             X_val, y_val = val.to_numpy(), val.index.to_numpy()
 
             regressor = XGBRegressor(
+                n_estimators=params['n_estimators'],
                 learning_rate=params['learning_rate'],
                 max_depth=params['max_depth'],
                 min_child_weight=params['min_child_weight'],
@@ -405,11 +406,12 @@ class VolumeFM(ForecastModel):
         self,
         df: pd.DataFrame,
         params: Dict[str, Union[float, str]] = {
-            "learning_rate": 0.03,
+            "n_estimators": 1000,
+            "learning_rate": 0.01,
             "max_depth": 6,
-            "min_child_weight": 7.24,
-            "subsample": 0.51,
-            "colsample_bytree": 0.68,
+            "min_child_weight": 1,
+            "subsample": 1,
+            "colsample_bytree": 1,
             "gamma": 2.84
         }
     ):
@@ -422,6 +424,7 @@ class VolumeFM(ForecastModel):
         X_test, y_test = decompose_tabular_data(test_set.to_numpy(), h=self.lag)
 
         self.model_ = XGBRegressor(
+            n_estimators=params['n_estimators'],
             learning_rate=params['learning_rate'],
             max_depth=params['max_depth'],
             min_child_weight=params['min_child_weight'],
@@ -430,7 +433,7 @@ class VolumeFM(ForecastModel):
             gamma=params['gamma'],
             scale_pos_weight=np.sqrt(len(y_train)/y_train.sum()),
             tree_method='hist',
-            booster='gbtree',
+            booster=None,
             objective='reg:squarederror',
             random_state=42
         )
@@ -561,6 +564,7 @@ class ClosePriceFM(ForecastModel):
             X_val, y_val = val.to_numpy(), val.index.to_numpy()
 
             regressor = XGBRegressor(
+                n_estimators=params['n_estimators'],
                 learning_rate=params['learning_rate'],
                 max_depth=params['max_depth'],
                 min_child_weight=params['min_child_weight'],
@@ -569,7 +573,7 @@ class ClosePriceFM(ForecastModel):
                 gamma=params['gamma'],
                 scale_pos_weight=np.sqrt(len(y_train)/y_train.sum()),
                 tree_method='hist',
-                booster='gbtree',
+                booster=None,
                 objective='reg:squarederror',
                 random_state=42
             )
@@ -586,11 +590,12 @@ class ClosePriceFM(ForecastModel):
         self,
         df: pd.DataFrame,
         params: Dict[str, Union[float, str]] = {
-            "learning_rate": 0.25,
-            "max_depth": 6,
-            "min_child_weight": 6.64,
-            "subsample": 0.997,
-            "colsample_bytree": 0.95,
+            "n_estimators": 1000,
+            "learning_rate": 0.01,
+            "max_depth": 3,
+            "min_child_weight": 3,
+            "subsample": 1,
+            "colsample_bytree": 1,
             "gamma": 2.03
         }
     ):
@@ -607,6 +612,7 @@ class ClosePriceFM(ForecastModel):
         X_test, y_test = decompose_tabular_data(test_set.to_numpy(), h=self.lag)
 
         self.model_ = XGBRegressor(
+            n_estimators=params['n_estimators'],
             learning_rate=params['learning_rate'],
             max_depth=params['max_depth'],
             min_child_weight=params['min_child_weight'],
@@ -615,7 +621,7 @@ class ClosePriceFM(ForecastModel):
             gamma=params['gamma'],
             scale_pos_weight=np.sqrt(len(y_train)/y_train.sum()),
             tree_method='hist',
-            booster='gbtree',
+            booster=None,
             objective='reg:squarederror',
             random_state=42,
         )
@@ -687,6 +693,9 @@ class LSTMCloseFM(ForecastModel):
         self.train_size = train_size
         self.df_: pd.DataFrame = None
         self.last_close_price: float = None
+        self.last_open_price: float = None
+        self.last_high_price: float = None
+        self.last_low_price: float = None
         self.target_names = [
             'Close', 'High', 'Low', 'Volume'
         ]
@@ -694,13 +703,11 @@ class LSTMCloseFM(ForecastModel):
             'EMA20', 'RSI14', 'ATR14', 'MACD', 'MACD_Signal', 'MACD_Hist'
         ]
         self.feature_names = self.target_names + self.indicators + [
-            'year', 'month_sin', 'month_cos', 'is_weekend', 'hour_sin',
-            'hour_cos', 'dow_0', 'dow_1', 'dow_2', 'dow_3', 'dow_4',
-            'dow_5', 'dow_6', 'season_1', 'season_2', 'season_3', 'season_4'
+            'year', 'month_sin', 'month_cos', 'hour_sin',
+            'hour_cos', 'dow_sin', 'dow_cos', 'season_sin', 'season_cos'
         ]
         self.epochs = 50
         self.patience = 10
-        self.indicators = ['EMA20', 'RSI14', 'ATR14', 'MACD', 'MACD_Signal', 'MACD_Hist']
 
     def _build_model(self, params: Dict[str, Any]):
         model = Sequential([
@@ -721,12 +728,14 @@ class LSTMCloseFM(ForecastModel):
 
         # First difference to remove trend
         self.last_close_price = df['Close'].iloc[-1]
-        df.loc[:, 'Close'] = df['Close'].diff()
-        df = df.dropna()
+        self.last_open_price = df['Open'].iloc[-1]
+        self.last_high_price = df['High'].iloc[-1]
+        self.last_low_price = df['Low'].iloc[-1]
 
-        # Day of Week (0=Monday, 6=Sunday)
-        df['day_of_week'] = df.index.dayofweek
-        df['day_of_week'] = pd.Categorical(df['day_of_week'], categories=range(7), ordered=True)
+        # First difference for target variables
+        for col in self.target_names:
+            df[col] = df[col].diff()
+        df = df.dropna()
 
         df['year'] = df.index.year
         df['year'] = pd.Categorical(df['year'], categories=range(2023, 2026), ordered=True)
@@ -739,11 +748,15 @@ class LSTMCloseFM(ForecastModel):
         df['month_cos'] = np.cos(2 * np.pi * month_index / 12)
 
         # Season (1=Winter, 2=Spring, 3=Summer, 4=Fall)
-        df['season'] = (df.index.month % 12 + 3) // 3
-        df['season'] = pd.Categorical(df['season'], categories=range(1, 5), ordered=True)
+        season_index = (df.index.month % 12 + 3) // 3
 
-        # Weekend flag (1 if Saturday/Sunday, else 0)
-        df['is_weekend'] = df.index.dayofweek.isin([5, 6]).astype(int)
+        # Season (1-4) → cyclical
+        df['season_sin'] = np.sin(2 * np.pi * season_index / 4)
+        df['season_cos'] = np.cos(2 * np.pi * season_index / 4)
+
+        # Day of week (0-6) → cyclical
+        df['dow_sin'] = np.sin(2 * np.pi * df.index.dayofweek / 7)
+        df['dow_cos'] = np.cos(2 * np.pi * df.index.dayofweek / 7)
 
         # Hour
         hour_index = df.index.hour
@@ -751,13 +764,6 @@ class LSTMCloseFM(ForecastModel):
         # Cyclical encoding for hours (24h period)
         df['hour_sin'] = np.sin(2 * np.pi * hour_index / 24)
         df['hour_cos'] = np.cos(2 * np.pi * hour_index / 24)
-
-        # For cyclical features (day_of_week, season)
-        df = pd.get_dummies(df, columns=['day_of_week', 'season'], prefix=['dow', 'season'])
-
-        # Normalization
-        for feature in ['year', 'month_sin', 'month_cos', 'hour_sin', 'hour_cos']:
-            df[feature] = MinMaxScaler().fit_transform(df[[feature]])
 
         df = df.astype(np.float32)
 
@@ -767,10 +773,6 @@ class LSTMCloseFM(ForecastModel):
 
         df = df.copy()
 
-        # Day of Week (0=Monday, 6=Sunday)
-        df['day_of_week'] = df.index.dayofweek
-        df['day_of_week'] = pd.Categorical(df['day_of_week'], categories=range(7), ordered=True)
-
         df['year'] = df.index.year
         df['year'] = pd.Categorical(df['year'], categories=range(2023, 2026), ordered=True)
 
@@ -782,11 +784,15 @@ class LSTMCloseFM(ForecastModel):
         df['month_cos'] = np.cos(2 * np.pi * month_index / 12)
 
         # Season (1=Winter, 2=Spring, 3=Summer, 4=Fall)
-        df['season'] = (df.index.month % 12 + 3) // 3
-        df['season'] = pd.Categorical(df['season'], categories=range(1, 5), ordered=True)
+        season_index = (df.index.month % 12 + 3) // 3
 
-        # Weekend flag (1 if Saturday/Sunday, else 0)
-        df['is_weekend'] = df.index.dayofweek.isin([5, 6]).astype(int)
+        # Season (1-4) → cyclical
+        df['season_sin'] = np.sin(2 * np.pi * season_index / 4)
+        df['season_cos'] = np.cos(2 * np.pi * season_index / 4)
+
+        # Day of week (0-6) → cyclical
+        df['dow_sin'] = np.sin(2 * np.pi * df.index.dayofweek / 7)
+        df['dow_cos'] = np.cos(2 * np.pi * df.index.dayofweek / 7)
 
         # Hour
         hour_index = df.index.hour
@@ -794,13 +800,6 @@ class LSTMCloseFM(ForecastModel):
         # Cyclical encoding for hours (24h period)
         df['hour_sin'] = np.sin(2 * np.pi * hour_index / 24)
         df['hour_cos'] = np.cos(2 * np.pi * hour_index / 24)
-
-        # For cyclical features (day_of_week, season)
-        df = pd.get_dummies(df, columns=['day_of_week', 'season'], prefix=['dow', 'season'])
-
-        # Normalization
-        for feature in ['year', 'month_sin', 'month_cos', 'hour_sin', 'hour_cos']:
-            df[feature] = MinMaxScaler().fit_transform(df[[feature]])
 
         # Set `Open` price
         df.loc[:, 'Open'] = np.nan
@@ -817,7 +816,7 @@ class LSTMCloseFM(ForecastModel):
 
     def _prepare_data(self, df: pd.DataFrame, lag: int):
         """
-        TODO: comment
+        Split dataset into a tensor of lagged observations.
         """
 
         data = df.copy()
@@ -928,18 +927,26 @@ class LSTMCloseFM(ForecastModel):
                 prediction_df.loc[date_range[idx+1], 'Open'] = history_df['Close'].iloc[-1]
 
         # Recover original time series
-        y_pred = history_df.loc[date_range[0]:date_range[-1], 'Close']
-        price_prediction = self.last_close_price + np.cumsum(y_pred)
+        y_pred = history_df.loc[date_range[0]:date_range[-1]]
+        close_price_cumulative = np.cumsum(y_pred)
+        close_price_prediction = self.last_close_price + close_price_cumulative['Close']
 
-        return price_prediction
+        # Other targets
+        # open_price_prediction = self.last_close_price + close_price_cumulative['Open']
+        # high_price_prediction = self.last_close_price + close_price_cumulative['High']
+        # low_price_prediction = self.last_close_price + close_price_cumulative['Low']
+
+        return close_price_prediction
 
     def dump(self, path: str) -> None:
         self.model.save(f"{path}/LSTM_Close_model.keras")
+        # joblib.dump(self.scaler, f"{path}/LSTM_Close_scaler.pkl")
         with open(f"{path}/params.config", "w") as f:
             f.write(json.dumps(self.params, indent=4))
 
     def load(self, df: pd.DataFrame, path: str):
         self.df_ = self.build(df.copy())
         self.model = load_model(f"{path}/LSTM_Close_model.keras")
+        # self.scaler = joblib.load(f"{path}/LSTM_Close_scaler.pkl")
         with open(f"{path}/params.config", "r") as f:
             self.params = json.loads(f.read())

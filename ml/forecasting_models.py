@@ -16,6 +16,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.saving import load_model
+import json
 
 
 class ForecastModel(ABC):
@@ -489,7 +490,7 @@ class ClosePriceFM(ForecastModel):
 
     def __init__(self, lag: int = 25, train_size: float = 0.7):
         self.lag = lag
-        self.train_size = 0.7
+        self.train_size = train_size
         self.feature_models = {
             'High': SLFM('High'),
             'Low': SLFM('Low'),
@@ -682,61 +683,150 @@ class ClosePriceFM(ForecastModel):
 
 
 class LSTMCloseFM(ForecastModel):
-    def __init__(self, lag=24, prediction_mode='original'):
-        if prediction_mode not in ['original', 'diff']:
-            raise ValueError("prediction_mode must be 'original' or 'diff'")
-        self.prediction_mode = prediction_mode
-        self.lag = lag
-        self.scaler = MinMaxScaler()
+    def __init__(self, train_size=0.7):
+        self.train_size = train_size
         self.df_: pd.DataFrame = None
         self.last_close_price: float = None
-        self.feature_names = [
-            'Close', 'High', 'Low', 'Volume',
-            'EMA20', 'RSI14', 'ATR14',
-            'MACD', 'MACD_Signal', 'MACD_Hist',
-            'sin_hour', 'cos_hour', 'sin_day_of_week', 'cos_day_of_week'
+        self.target_names = [
+            'Close', 'High', 'Low', 'Volume'
+        ]
+        self.indicators = [
+            'EMA20', 'RSI14', 'ATR14', 'MACD', 'MACD_Signal', 'MACD_Hist'
+        ]
+        self.feature_names = self.target_names + self.indicators + [
+            'year', 'month_sin', 'month_cos', 'is_weekend', 'hour_sin',
+            'hour_cos', 'dow_0', 'dow_1', 'dow_2', 'dow_3', 'dow_4',
+            'dow_5', 'dow_6', 'season_1', 'season_2', 'season_3', 'season_4'
         ]
         self.epochs = 50
         self.patience = 10
+        self.indicators = ['EMA20', 'RSI14', 'ATR14', 'MACD', 'MACD_Signal', 'MACD_Hist']
 
     def _build_model(self, params: Dict[str, Any]):
         model = Sequential([
-            Input(shape=(len(self.feature_names), self.lag)),
+            Input(shape=(len(self.feature_names), params['lag'])),
             LSTM(params['layer1'], return_sequences=True),
             Dropout(params['dropout']),
             LSTM(params['layer2']),
+            Dropout(params['dropout']),
             Dense(params['layer3'], activation='relu'),
-            Dense(len(self.feature_names))
+            Dense(len(self.target_names))
         ])
         model.compile(optimizer=Adam(learning_rate=params['learning_rate']), loss='mse')
         return model
 
     def build(self, df: pd.DataFrame):
-        self.last_close_price = df.iloc[-1]['Close']
-        self.df_ = self.build_forecast_data(df)
-        return self.df_
 
-    def build_forecast_data(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
-        df['hour'] = df.index.hour
+
+        # First difference to remove trend
+        self.last_close_price = df['Close'].iloc[-1]
+        df.loc[:, 'Close'] = df['Close'].diff()
+        df = df.dropna()
+
+        # Day of Week (0=Monday, 6=Sunday)
         df['day_of_week'] = df.index.dayofweek
+        df['day_of_week'] = pd.Categorical(df['day_of_week'], categories=range(7), ordered=True)
 
-        df['sin_hour'] = np.sin(2 * np.pi * df['hour'] / 24)
-        df['cos_hour'] = np.cos(2 * np.pi * df['hour'] / 24)
+        df['year'] = df.index.year
+        df['year'] = pd.Categorical(df['year'], categories=range(2023, 2026), ordered=True)
 
-        df['sin_day_of_week'] = np.sin(2 * np.pi * df['day_of_week'] / 7)
-        df['cos_day_of_week'] = np.cos(2 * np.pi * df['day_of_week'] / 7)
+        # Month (1-12)
+        month_index = df.index.month
+
+        # Cyclical encoding for months (12-month period)
+        df['month_sin'] = np.sin(2 * np.pi * month_index / 12)
+        df['month_cos'] = np.cos(2 * np.pi * month_index / 12)
+
+        # Season (1=Winter, 2=Spring, 3=Summer, 4=Fall)
+        df['season'] = (df.index.month % 12 + 3) // 3
+        df['season'] = pd.Categorical(df['season'], categories=range(1, 5), ordered=True)
+
+        # Weekend flag (1 if Saturday/Sunday, else 0)
+        df['is_weekend'] = df.index.dayofweek.isin([5, 6]).astype(int)
+
+        # Hour
+        hour_index = df.index.hour
+
+        # Cyclical encoding for hours (24h period)
+        df['hour_sin'] = np.sin(2 * np.pi * hour_index / 24)
+        df['hour_cos'] = np.cos(2 * np.pi * hour_index / 24)
+
+        # For cyclical features (day_of_week, season)
+        df = pd.get_dummies(df, columns=['day_of_week', 'season'], prefix=['dow', 'season'])
+
+        # Normalization
+        for feature in ['year', 'month_sin', 'month_cos', 'hour_sin', 'hour_cos']:
+            df[feature] = MinMaxScaler().fit_transform(df[[feature]])
+
+        df = df.astype(np.float32)
 
         return df
 
-    def _prepare_data(self, df):
-        data = df[self.feature_names].copy()
-        data = data.bfill().ffill()  # filling in the gaps
+    def build_forecast_data(self, df: pd.DataFrame) -> pd.DataFrame:
 
-        data_scaled = self.scaler.fit_transform(data)
-        X = sliding_window_view(data_scaled, window_shape=self.lag, axis=0)
+        df = df.copy()
+
+        # Day of Week (0=Monday, 6=Sunday)
+        df['day_of_week'] = df.index.dayofweek
+        df['day_of_week'] = pd.Categorical(df['day_of_week'], categories=range(7), ordered=True)
+
+        df['year'] = df.index.year
+        df['year'] = pd.Categorical(df['year'], categories=range(2023, 2026), ordered=True)
+
+        # Month (1-12)
+        month_index = df.index.month
+
+        # Cyclical encoding for months (12-month period)
+        df['month_sin'] = np.sin(2 * np.pi * month_index / 12)
+        df['month_cos'] = np.cos(2 * np.pi * month_index / 12)
+
+        # Season (1=Winter, 2=Spring, 3=Summer, 4=Fall)
+        df['season'] = (df.index.month % 12 + 3) // 3
+        df['season'] = pd.Categorical(df['season'], categories=range(1, 5), ordered=True)
+
+        # Weekend flag (1 if Saturday/Sunday, else 0)
+        df['is_weekend'] = df.index.dayofweek.isin([5, 6]).astype(int)
+
+        # Hour
+        hour_index = df.index.hour
+
+        # Cyclical encoding for hours (24h period)
+        df['hour_sin'] = np.sin(2 * np.pi * hour_index / 24)
+        df['hour_cos'] = np.cos(2 * np.pi * hour_index / 24)
+
+        # For cyclical features (day_of_week, season)
+        df = pd.get_dummies(df, columns=['day_of_week', 'season'], prefix=['dow', 'season'])
+
+        # Normalization
+        for feature in ['year', 'month_sin', 'month_cos', 'hour_sin', 'hour_cos']:
+            df[feature] = MinMaxScaler().fit_transform(df[[feature]])
+
+        # Set `Open` price
+        df.loc[:, 'Open'] = np.nan
+        df.loc[df.index[0], 'Open'] = self.df_['Close'].iloc[-1]
+
+        # Set Indicators
+        for indicator in self.indicators:
+            df.loc[:, indicator] = np.nan
+            df.loc[df.index[0], indicator] = self.df_[indicator].iloc[-1]
+
+        df = df.astype(np.float32)
+
+        return df
+
+    def _prepare_data(self, df: pd.DataFrame, lag: int):
+        """
+        TODO: comment
+        """
+
+        data = df.copy()
+
+        target_data = data[self.target_names].copy()
+
+        X = sliding_window_view(data.to_numpy(), window_shape=lag, axis=0)
         X = X[:-1]
-        y = data_scaled[self.lag:]
+        y = target_data[lag:].to_numpy()
 
         return X, y
 
@@ -749,15 +839,14 @@ class LSTMCloseFM(ForecastModel):
 
         tss = TimeSeriesSplit(n_splits=K, test_size=test_size, gap=24)
 
-        X, y = self._prepare_data(history_df)
-        # X = X.reshape(X.shape[0], self.lag, -1)
+        X, y = self._prepare_data(history_df, lag=params['lag'])
 
         score = 0
 
         for train_idx, val_idx in tss.split(X):
 
-            X_train, X_val = X[train_idx][:-self.lag], X[val_idx][:-self.lag]
-            y_train, y_val = y[train_idx][self.lag:], y[val_idx][self.lag:]
+            X_train, X_val = X[train_idx][:-params['lag']], X[val_idx][:-params['lag']]
+            y_train, y_val = y[train_idx][params['lag']:], y[val_idx][params['lag']:]
 
             self.model = self._build_model(params)
 
@@ -783,18 +872,20 @@ class LSTMCloseFM(ForecastModel):
                 'layer2': 64,
                 'layer3': 32,
                 'dropout': 0.3,
-                'learning_rate': 0.01
+                'learning_rate': 0.01,
+                'lag': 60
             },
             ):
 
-        self.build(df)
-        X, y = self._prepare_data(self.df_)
+        self.df_ = self.build(df)
+        train_size = int(len(self.df_) * self.train_size)
+        train_set, val_set = self.df_.iloc[:train_size], self.df_.iloc[train_size:]
 
-        val_size = int(len(X) * 0.1)
-        X_train, y_train = X[:-val_size], y[:-val_size]
-        X_val, y_val = X[-val_size:], y[-val_size:]
+        X_train, y_train = self._prepare_data(train_set, lag=params['lag'])
+        X_val, y_val = self._prepare_data(val_set, lag=params['lag'])
 
         self.model = self._build_model(params)
+        self.params = params
 
         self.model.fit(
             X_train, y_train,
@@ -807,40 +898,48 @@ class LSTMCloseFM(ForecastModel):
         return self
 
     def predict(self, date_range: pd.DatetimeIndex) -> pd.Series:
-        sequence = self.df_[self.feature_names].copy()
-        sequence = sequence.bfill().ffill()
-        last_sequence = sequence.values[-self.lag:]
-        last_sequence_scaled = self.scaler.transform(last_sequence)
 
-        predictions_close_scaled = []
+        prediction_df = self.build_forecast_data(pd.DataFrame(index=date_range))
 
-        for _ in date_range:
-            x = last_sequence_scaled.reshape(1, len(self.feature_names), -1)
-            pred_scaled_full = self.model.predict(x, verbose=0)[0]
+        history_df = self.df_.copy()
 
-            pred_close_scaled = pred_scaled_full[0]
-            predictions_close_scaled.append(pred_close_scaled)
+        for idx, date in enumerate(date_range):
+            x_ = history_df.iloc[-self.params['lag']:].to_numpy().reshape(1, -1, self.params['lag'])
+            y_ = self.model.predict(x_, verbose=0)[0]
 
-            # update input sequence with the new prediction
-            last_sequence_scaled = np.vstack([
-                last_sequence_scaled[1:],
-                pred_scaled_full
-            ])
+            prediction_df.loc[date, self.target_names] = y_
 
-        dummy = np.zeros((len(predictions_close_scaled), len(self.feature_names)))
-        dummy[:, 0] = predictions_close_scaled
-        predicted_close = self.scaler.inverse_transform(dummy)[:, 0]
+            history_df = pd.concat([history_df, pd.DataFrame.from_records([prediction_df.loc[date]], index=[date])])
 
-        if self.prediction_mode == 'diff':
-            predicted_close = np.cumsum(predicted_close) + self.last_close_price
+            # Indicators
+            history_df['EMA20'] = ta.trend.EMAIndicator(history_df['Close'], window=20).ema_indicator()
+            history_df['RSI14'] = ta.momentum.RSIIndicator(history_df['Close'], window=14).rsi()
+            history_df['ATR14'] = ta.volatility.AverageTrueRange(
+                history_df['High'], history_df['Low'], history_df['Close'], window=14
+            ).average_true_range()
 
-        return pd.Series(predicted_close, index=date_range)
+            macd = ta.trend.MACD(history_df['Close'], window_slow=26, window_fast=12, window_sign=9)
+            history_df['MACD'] = macd.macd()
+            history_df['MACD_Signal'] = macd.macd_signal()
+            history_df['MACD_Hist'] = macd.macd_diff()
+
+            # Set `Open` price
+            if idx < len(date_range)-1:
+                prediction_df.loc[date_range[idx+1], 'Open'] = history_df['Close'].iloc[-1]
+
+        # Recover original time series
+        y_pred = history_df.loc[date_range[0]:date_range[-1], 'Close']
+        price_prediction = self.last_close_price + np.cumsum(y_pred)
+
+        return price_prediction
 
     def dump(self, path: str) -> None:
         self.model.save(f"{path}/LSTM_Close_model.keras")
-        joblib.dump(self.scaler, f"{path}/LSTM_Close_scaler.pkl")
+        with open(f"{path}/params.config", "w") as f:
+            f.write(json.dumps(self.params, indent=4))
 
     def load(self, df: pd.DataFrame, path: str):
         self.df_ = self.build(df.copy())
         self.model = load_model(f"{path}/LSTM_Close_model.keras")
-        self.scaler = joblib.load(f"{path}/LSTM_Close_scaler.pkl")
+        with open(f"{path}/params.config", "r") as f:
+            self.params = json.loads(f.read())

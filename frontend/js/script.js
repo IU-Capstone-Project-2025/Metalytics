@@ -7,61 +7,10 @@ let metalNames = {
   zinc: 'ZINC'
 };
 
-const metalNews = {
-  gold: [
-    {
-      info: "Gold prices reached new highs today as investors seek safe haven assets amid market volatility. The precious metal continues to show strong performance in uncertain economic conditions.",
-      date: "10.00, 24.04.2025"
-    },
-    {
-      info: "Central banks around the world continue to increase their gold reserves, signaling confidence in the metal's long-term value. This trend is expected to support gold prices in the coming months.",
-      date: "09.30, 24.04.2025"
-    },
-    {
-      info: "Gold mining companies report increased production costs due to rising energy prices, which may impact supply and contribute to price stability in the gold market.",
-      date: "09.00, 24.04.2025"
-    },
-    {
-      info: "Technical analysis suggests gold is forming a bullish pattern, with key resistance levels being tested. Traders are watching for potential breakout opportunities.",
-      date: "08.30, 24.04.2025"
-    }
-  ],
-  silver: [
-    {
-      info: "silver ore prices show mixed signals as Chinese steel production remains strong but global demand concerns persist. Market analysts are closely monitoring supply chain developments.",
-      date: "10.00, 24.04.2025"
-    },
-    {
-      info: "Major silver ore producers announce production cuts in response to market conditions, which could tighten supply and support prices in the short term.",
-      date: "09.30, 24.04.2025"
-    },
-    {
-      info: "Steel industry demand for silver ore remains robust in Asia, while European markets show signs of recovery. This regional divergence is creating interesting trading opportunities.",
-      date: "09.00, 24.04.2025"
-    },
-    {
-      info: "Envsilvermental regulations are impacting silver ore mining operations, leading to increased production costs and potential supply constraints in certain regions.",
-      date: "08.30, 24.04.2025"
-    }
-  ],
-  zinc: [
-    {
-      info: "Zinc prices are climbing as supply concerns mount due to mine closures and production disruptions. The metal's essential role in galvanization continues to drive demand.",
-      date: "10.00, 24.04.2025"
-    },
-    {
-      info: "Electric vehicle battery demand is creating new opportunities for zinc producers, as the metal is increasingly used in advanced battery technologies and energy storage solutions.",
-      date: "09.30, 24.04.2025"
-    },
-    {
-      info: "Zinc inventories at major exchanges are declining, indicating strong physical demand and potential for further price increases in the coming weeks.",
-      date: "09.00, 24.04.2025"
-    },
-    {
-      info: "Construction sector demand for zinc remains strong, particularly in emerging markets where infrastructure development is accelerating rapidly.",
-      date: "08.30, 24.04.2025"
-    }
-  ]
+let metalNews = {
+  gold: [],
+  silver: [],
+  zinc: []
 };
 
 let swiper;
@@ -69,7 +18,7 @@ let swiper;
 document.addEventListener("DOMContentLoaded", () => {
   swiper = new Swiper('.swiper', {
     direction: 'horizontal',
-    loop: true,
+    loop: false,
     effect: 'creative',
     creativeEffect: {
         prev: {
@@ -110,7 +59,9 @@ document.addEventListener("DOMContentLoaded", () => {
           display: false
         }
       };
-    } else {
+    } 
+    
+    else {
       return {
         ticks: {
           maxRotation: 45,
@@ -132,6 +83,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function shortNumberFormat(num) {
+    if (selectedMetal === 'zinc') {
+      return num.toFixed(4);
+    }
+    
     if (Math.abs(num) >= 1e6) return (num / 1e6).toFixed(1) + 'M';
     if (Math.abs(num) >= 1e3) return (num / 1e3).toFixed(1) + 'K';
     return num.toFixed(1);
@@ -144,7 +99,9 @@ document.addEventListener("DOMContentLoaded", () => {
           display: false
         }
       };
-    } else {
+    } 
+    
+    else {
       return {
         ticks: {
           callback: function(value) {
@@ -231,7 +188,8 @@ document.addEventListener("DOMContentLoaded", () => {
   async function fetchData(periodKey) {
     const period = periodToPeriodCode[periodKey];
     const interval = periodToInterval[periodKey];
-    const response = await fetch(`http://localhost:8000/historical_data/Gold?period=${period}&interval=${interval}`);
+    const metalName = selectedMetal.charAt(0).toUpperCase() + selectedMetal.slice(1);
+    const response = await fetch(`http://localhost:8000/historical_data/${metalName}?period=${period}&interval=${interval}`);
     
     if (!response.ok) {
       console.error("Error", response.status);
@@ -253,6 +211,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     chart.data.labels = labels;
     chart.data.datasets[0].data = prices;
+    chart.data.datasets[0].label = `${metalName} price`;
+
+    if (selectedMetal === 'gold') {
+      chart.data.datasets[0].borderColor = 'red';
+      chart.data.datasets[0].backgroundColor = 'rgba(255,0,0,0.1)';
+    } 
+    
+    else if (selectedMetal === 'silver') {
+      chart.data.datasets[0].borderColor = '#C0C0C0';
+      chart.data.datasets[0].backgroundColor = 'rgba(192,192,192,0.1)';
+    } 
+    
+    else if (selectedMetal === 'zinc') {
+      chart.data.datasets[0].borderColor = '#3A8DFF';
+      chart.data.datasets[0].backgroundColor = 'rgba(58,141,255,0.1)';
+    }
+
     chart.update();
     
     setTimeout(setSwiperHeight, 100);
@@ -260,11 +235,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function fetchPredictedData(periodKey) {
     const forecastParams = periodToForecast[periodKey] || { unit: "h", value: 24 };
-    const response = await fetch(`http://localhost:8000/forecast/Gold/days?unit=${forecastParams.unit}&value=${forecastParams.value}`);
+    const metalName = selectedMetal.charAt(0).toUpperCase() + selectedMetal.slice(1);
+    const response = await fetch(`http://localhost:8000/forecast/${metalName}/days?unit=${forecastParams.unit}&value=${forecastParams.value}`);
     if (!response.ok) {
       console.error("Error", response.status);
       return;
     }
+    
     const data = await response.json();
     const labels = data.map(point => {
       const date = new Date(point.timestamp);
@@ -274,10 +251,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       return date.toLocaleString();
     });
+
     const prices = data.map(point => point.price);
     chart.data.labels = labels;
     chart.data.datasets[0].data = prices;
-    chart.data.datasets[0].label = "Predicted Gold price";
+    chart.data.datasets[0].label = `Predicted ${metalName} price`;
     chart.data.datasets[0].borderColor = "blue";
     chart.data.datasets[0].backgroundColor = "rgba(0,0,255,0.1)";
     chart.update();
@@ -299,6 +277,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.querySelectorAll(".graph__button").forEach(button => {
     button.addEventListener("click", () => {
+      if (button.classList.contains("graph__button--disabled")) {
+        return;
+      }
       if (button.dataset.interval) {
         currentPeriod = button.dataset.interval;
         if (currentSelect === "historical") {
@@ -328,11 +309,52 @@ document.addEventListener("DOMContentLoaded", () => {
 
   fetchData("day");
 
+  function setPredictedButtonAvailability(isAvailable) {
+    const predictedBtn = document.querySelector('.graph__button[data-select="predicted"]');
+    if (!predictedBtn) return;
+    if (isAvailable) {
+      predictedBtn.classList.remove('graph__button--disabled');
+      if (predictedBtn._tippy) {
+        predictedBtn._tippy.destroy();
+      }
+    } else {
+      predictedBtn.classList.add('graph__button--disabled');
+      tippy(predictedBtn, {
+        content: "Currently not available",
+        arrow: true,
+        animation: 'fade',
+      });
+    }
+  }
+
   document.querySelectorAll('[data-metal]').forEach(button => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       selectedMetal = button.dataset.metal;
       activeMetal();
-      updateUI();
+      if (selectedMetal === 'silver' || selectedMetal === 'zinc') {
+        selectedDate = 'day';
+        setPredictedButtonAvailability(false);
+        document.querySelectorAll('.graph__button[data-interval]').forEach(btn => {
+          btn.classList.toggle('graph__button--active', btn.dataset.interval === 'day');
+        });
+        currentSelect = 'historical';
+        setSelectButtonActive(currentSelect);
+        activeSelect();
+        fetchData('day');
+      } 
+      
+      else if (selectedMetal === 'gold') {
+        selectedDate = 'day';
+        setPredictedButtonAvailability(true);
+        document.querySelectorAll('.graph__button[data-interval]').forEach(btn => {
+          btn.classList.toggle('graph__button--active', btn.dataset.interval === 'day');
+        });
+        currentSelect = 'historical';
+        setSelectButtonActive(currentSelect);
+        activeSelect();
+        fetchData('day');
+      }
+      await updateUI();
     });
   });
   
@@ -360,9 +382,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   addRippleEffectToMetalButtons();
   
-  updateNewsContent();
-  
-  setSwiperHeight();
+  updateNewsContent().then(() => {
+    setSwiperHeight();
+  });
 
   let newsButton = document.querySelector('.swiper-button-open');
   let newsSection = document.querySelector('.news');
@@ -425,30 +447,186 @@ function setSwiperHeight() {
   }
 }
 
-function updateNewsContent() {
-  const newsData = metalNews[selectedMetal];
+async function fetchNewsFromBackend(metal) {
+  try {
+    const response = await fetch(`http://localhost:8000/news/${metal}`);
+    if (!response.ok) {
+      console.error("Error fetching news:", response.status);
+      return [];
+    }
+    const newsData = await response.json();
+    return newsData;
+  } catch (error) {
+    console.error("Error fetching news:", error);
+    return [];
+  }
+}
+
+function formatNewsDate(dateString) {
+  try {
+    const dateMatch = dateString.match(/(\d{1,2})\s+(\w+)\s+(\d{4})\.?,\s*(\d{1,2}):(\d{2})/);
+    if (dateMatch) {
+      const [_, day, month, year, hour, minute] = dateMatch;
+      const monthMap = {
+        'January': '01', 'February': '02', 'March': '03', 'April': '04',
+        'May': '05', 'June': '06', 'July': '07', 'August': '08',
+        'September': '09', 'October': '10', 'November': '11', 'December': '12'
+      };
+      const monthNum = monthMap[month] || '01';
+      return `${hour.padStart(2, '0')}.${minute}, ${day.padStart(2, '0')}.${monthNum}.${year}`;
+    }
+    return dateString;
+  } 
+  
+  catch (error) {
+    console.error("Error formatting date:", error);
+    return dateString;
+  }
+}
+
+function getFallbackNews(metal) {
+  const fallbackNews = {
+    silver: [
+      {
+        preview: "Silver prices show mixed signals as Chinese steel production remains strong but global demand concerns persist. Market analysts are closely monitoring supply chain developments.",
+        date: "10.00, 24.04.2025"
+      },
+      {
+        preview: "Major silver producers announce production cuts in response to market conditions, which could tighten supply and support prices in the short term.",
+        date: "09.30, 24.04.2025"
+      },
+      {
+        preview: "Steel industry demand for silver remains robust in Asia, while European markets show signs of recovery. This regional divergence is creating interesting trading opportunities.",
+        date: "09.00, 24.04.2025"
+      },
+      {
+        preview: "Environmental regulations are impacting silver mining operations, leading to increased production costs and potential supply constraints in certain regions.",
+        date: "08.30, 24.04.2025"
+      },
+      {
+        preview: "Silver investment demand continues to grow as investors seek alternative assets amid economic uncertainty and inflation concerns.",
+        date: "08.00, 24.04.2025"
+      }
+    ],
+    gold: [
+      {
+        preview: "Gold prices reached new highs today as investors seek safe haven assets amid market volatility. The precious metal continues to show strong performance in uncertain economic conditions.",
+        date: "10.00, 24.04.2025"
+      },
+      {
+        preview: "Central banks around the world continue to increase their gold reserves, signaling confidence in the metal's long-term value. This trend is expected to support gold prices in the coming months.",
+        date: "09.30, 24.04.2025"
+      },
+      {
+        preview: "Gold mining companies report increased production costs due to rising energy prices, which may impact supply and contribute to price stability in the gold market.",
+        date: "09.00, 24.04.2025"
+      }
+    ],
+    zinc: [
+      {
+        preview: "Zinc prices are climbing as supply concerns mount due to mine closures and production disruptions. The metal's essential role in galvanization continues to drive demand.",
+        date: "10.00, 24.04.2025"
+      },
+      {
+        preview: "Electric vehicle battery demand is creating new opportunities for zinc producers, as the metal is increasingly used in advanced battery technologies and energy storage solutions.",
+        date: "09.30, 24.04.2025"
+      },
+      {
+        preview: "Zinc inventories at major exchanges are declining, indicating strong physical demand and potential for further price increases in the coming weeks.",
+        date: "09.00, 24.04.2025"
+      }
+    ]
+  };
+  return fallbackNews[metal] || [];
+}
+
+async function updateNewsContent() {
   const swiperWrapper = document.querySelector('.swiper-wrapper');
   
-  swiperWrapper.innerHTML = '';
+  // Show loading state
+  swiperWrapper.innerHTML = '<div class="swiper-slide"><div><p class="news__info">Loading news...</p></div></div>';
   
-  newsData.forEach(newsItem => {
-    const slide = document.createElement('div');
-    slide.className = 'swiper-slide';
-    slide.innerHTML = `
-      <div>
-        <p class="news__info">
-          ${newsItem.info}
-        </p>
-        <p class="news__date">
-          ${newsItem.date}
-        </p>
-      </div>
-    `;
-    swiperWrapper.appendChild(slide);
-  });
-  
-  if (swiper) {
-    swiper.update();
+  try {
+    // Fetch news from backend
+    const newsData = await fetchNewsFromBackend(selectedMetal);
+    
+    swiperWrapper.innerHTML = '';
+    
+    // Helper to render news with ellipsis and link
+    function renderNewsText(newsItem) {
+      let text = newsItem.preview || newsItem.title;
+      if (text && text.trim().endsWith('...') && newsItem.url) {
+        // Remove the last ... and add link on a new line
+        text = text.replace(/\.\.\.$/, '...<br><a href="' + newsItem.url + '" target="_blank" style="color:#D3AC49;">More details here</a>');
+      }
+      return text;
+    }
+
+    if (newsData.length === 0) {
+      // Try fallback news for metals without backend data
+      const fallbackData = getFallbackNews(selectedMetal);
+      if (fallbackData.length > 0) {
+        fallbackData.slice(0, 4).forEach(newsItem => {
+          let text = newsItem.preview;
+          if (text && text.trim().endsWith('...') && newsItem.url) {
+            text = text.replace(/\.\.\.$/, '...<br><a href="' + newsItem.url + '" target="_blank" style="color:#D3AC49;">More details here</a>');
+          }
+          const slide = document.createElement('div');
+          slide.className = 'swiper-slide';
+          slide.innerHTML = `
+            <div>
+              <p class="news__info">
+                ${text}
+              </p>
+              <p class="news__date">
+                ${newsItem.date}
+              </p>
+            </div>
+          `;
+          swiperWrapper.appendChild(slide);
+        });
+      } else {
+        // Show no news message
+        const slide = document.createElement('div');
+        slide.className = 'swiper-slide';
+        slide.innerHTML = `
+          <div>
+            <p class="news__info">
+              No news available for ${metalNames[selectedMetal]} at the moment.
+            </p>
+            <p class="news__date">
+              ${new Date().toLocaleDateString()}
+            </p>
+          </div>
+        `;
+        swiperWrapper.appendChild(slide);
+      }
+    } else {
+      // Display real news from backend, limit to 4
+      newsData.slice(0, 4).forEach(newsItem => {
+        const slide = document.createElement('div');
+        slide.className = 'swiper-slide';
+        slide.innerHTML = `
+          <div>
+            <p class="news__info">
+              ${renderNewsText(newsItem)}
+            </p>
+            <p class="news__date">
+              ${formatNewsDate(newsItem.date)}
+            </p>
+          </div>
+        `;
+        swiperWrapper.appendChild(slide);
+      });
+    }
+    
+    if (swiper) {
+      swiper.update();
+      swiper.slideTo(0, 0); // Go to the first slide instantly
+    }
+  } catch (error) {
+    console.error("Error updating news content:", error);
+    swiperWrapper.innerHTML = '<div class="swiper-slide"><div><p class="news__info">Error loading news. Please try again later.</p></div></div>';
   }
 }
 
@@ -503,14 +681,14 @@ function addRippleEffectToMetalButtons() {
   });
 }
 
-function updateUI() {
+async function updateUI() {
   let title = document.querySelector('.graph__title');
   title.textContent = metalNames[selectedMetal];
 
   let newsTitle = document.querySelector('.news__title--metal');
   newsTitle.textContent = metalNames[selectedMetal];
 
-  updateNewsContent();
+  await updateNewsContent();
   
   setTimeout(setSwiperHeight, 100);
 }
@@ -531,7 +709,9 @@ function setupCustomSelects() {
       e.stopPropagation();
       if (select.classList.contains('open')) {
         select.classList.remove('open');
-      } else {
+      } 
+      
+      else {
         closeAllSelects(select);
         select.classList.add('open');
       }

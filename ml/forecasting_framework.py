@@ -6,6 +6,7 @@ import os
 from forecasting_models import ForecastModel, ClosePriceFM
 from data_loader import GoldDataLoader
 
+
 class ForecastFramework:
     """
     Class for creating, maintaining, dumping, and loading forecasting models.
@@ -22,13 +23,13 @@ class ForecastFramework:
 
     def __init__(
             self,
-            data_loader: GoldDataLoader,
+            data_loader: GoldDataLoader = GoldDataLoader(),
             target_columns=['Close'],
             forecast_model=ClosePriceFM(),
             name="baseline_model",
             train_size=0.7
     ):
-        self.df = data_loader.load_data()  
+        self.df = data_loader.load_data()
         self.target_columns = target_columns
 
         train_size = int(len(self.df) * train_size)
@@ -91,7 +92,7 @@ class ForecastFramework:
 
     def load_from_file(
         path: str,
-        df: pd.DataFrame,
+        data_loader: GoldDataLoader = GoldDataLoader(),
         target_columns=['Close'],
         forecast_model: ForecastModel = ClosePriceFM(),
         name="baseline_model",
@@ -113,8 +114,8 @@ class ForecastFramework:
             ForecastFramework: constructed framework object.
         """
         assert os.path.exists(path)
-        framework = ForecastFramework(df, target_columns, forecast_model, name, train_size)
-        framework.forecast_model.load(df, path)
+        framework = ForecastFramework(data_loader, target_columns, forecast_model, name, train_size)
+        framework.forecast_model.load(framework.train_set, path)
         return framework
 
     def create_forecast(self, value: int = 1, unit: str = 'd') -> pd.Series:

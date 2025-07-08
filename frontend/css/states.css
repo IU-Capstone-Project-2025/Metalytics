@@ -1,0 +1,111 @@
+.header__button {
+    --metal-border-color: #EAAA28;
+    position: relative;
+    z-index: 1;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    overflow: hidden;
+}
+
+.header__button .ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple 0.6s linear;
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+.header__button-border {
+    opacity: 0;
+    pointer-events: none;
+    stroke-dasharray: 608 608;
+    stroke-dashoffset: 608;
+    transition:
+      opacity 0.1s,
+      stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+
+.header__button--active + .header__button-border {
+    opacity: 1;
+    stroke-dashoffset: 0;
+    transition:
+      opacity 0.1s,
+      stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+
+.header__button:hover {
+    background-color: var(--swiper);
+}
+
+.header__button:focus {
+    outline: none;
+    background-color: var(--focus);
+}
+
+.header__burger-block {
+    transition: left 0.3s ease-in-out;
+}
+
+.news {
+    transition: left 0.3s ease-in-out;
+}
+
+.swiper-button-prev>svg>path, .swiper-button-next>svg>path {
+    transition: stroke 0.3s ease;
+}
+
+.swiper-button-prev:hover>svg>path, .swiper-button-next:hover>svg>path {
+    stroke: var(--chartsBtn);
+}
+
+.swiper-button-prev:focus-visible, .swiper-button-next:focus-visible {
+    outline: none;
+}
+
+.swiper-button-prev:focus-visible>svg>path, .swiper-button-next:focus-visible>svg>path {
+    stroke: var(--grey);
+}
+
+.swiper-button-prev:active>svg>path, .swiper-button-next:active>svg>path {
+    stroke: var(--white);
+}
+
+.graph__button {
+    transition: color 0.3s ease, background-color, 0.3s ease, border 0.3s ease;
+}
+
+.graph__button:hover {
+    color: var(--white);
+    background-color: var(--borderColor);
+}
+
+.graph__button:focus-visible {
+    outline: none;
+    border: 1px solid var(--borderColor);
+}
+
+.graph__button:active {
+    color: var(--white);
+    background-color: var(--borderColor);
+    border: none;
+}
+
+.graph__button--active {
+    color: var(--white) !important;
+    background-color: var(--borderColor) !important;
+    border: 1px solid var(--grey) !important;
+}
+
+.graph__button--disabled {
+  cursor: not-allowed !important;
+  border: none !important;
+  background-color: var(--swiper) !important;
+}

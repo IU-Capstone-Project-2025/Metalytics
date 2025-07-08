@@ -10,8 +10,8 @@ def parse_metalinfo_news(page_url, metal_list):
     try:
         news_list = []
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'+
-            ' AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.447'+
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' +
+            ' AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.447' +
             '2.124 Safari/537.36'
         }
         response = requests.get(page_url, headers=headers)

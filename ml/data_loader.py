@@ -129,8 +129,16 @@ class SilverDataLoader:
         df['MACD_Signal'] = macd.macd_signal()
         df['MACD_Hist'] = macd.macd_diff()
         df['Month'] = df.index.month
-
-        return df
+        ## adding gold/silver ratio
+        gold_loader = GoldDataLoader()
+        gold_df = gold_loader.load_data()
+        gold_close = gold_df['Close'].rename('Gold_Close')
+        
+        combined = pd.concat([df, gold_close], axis=1)
+        combined['Gold_Silver_Ratio'] = combined['Gold_Close'] / combined['Close']
+        combined.drop('Gold_Close', axis=1, inplace=True)
+    
+        return combined
 
     def _needs_update(self):
         if not os.path.exists(self.processed_data_path):

@@ -17,7 +17,9 @@ class GoldDataLoader:
         self.data = None
 
     def _fetch_raw_data(self):
-        """Downloads raw data"""
+        """
+        Downloads raw data
+        """
         ticker = "GC=F"
         interval = "1h"
         STEP_DAYS = 60
@@ -54,20 +56,31 @@ class GoldDataLoader:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
         df.dropna(subset=["Close", "High", "Low", "Open"], inplace=True)
-        df["EMA20"] = ta.trend.EMAIndicator(df["Close"], window=20).ema_indicator()
+        df["EMA20"] = ta.trend.EMAIndicator(
+            df["Close"],
+            window=20
+        ).ema_indicator()
         df["RSI14"] = ta.momentum.RSIIndicator(df["Close"], window=14).rsi()
         df["ATR14"] = ta.volatility.AverageTrueRange(
             df["High"], df["Low"], df["Close"], window=14
         ).average_true_range()
 
-        macd = ta.trend.MACD(df["Close"], window_slow=26, window_fast=12, window_sign=9)
+        macd = ta.trend.MACD(
+            df["Close"],
+            window_slow=26,
+            window_fast=12,
+            window_sign=9
+        )
         df["MACD"] = macd.macd()
         df["MACD_Signal"] = macd.macd_signal()
         df["MACD_Hist"] = macd.macd_diff()
         return df
 
     def _needs_update(self):
-        """Checks whether the data needs to be updated (if >1 day has passed since the last update)"""
+        """
+        Checks whether the data needs to be updated
+        (if >1 day has passed since the last update)
+        """
         if not os.path.exists(self.processed_data_path):
             return True
         last_modified = datetime.fromtimestamp(
@@ -76,7 +89,9 @@ class GoldDataLoader:
         return (datetime.now() - last_modified) > timedelta(days=1)
 
     def load_data(self):
-        """Main method: returns up-to-date data"""
+        """
+        Main method: returns up-to-date data
+        """
         if self._needs_update():
             print("Updating the data")
             raw_df = self._fetch_raw_data()

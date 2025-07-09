@@ -3,12 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from forecasting_framework import ForecastFramework
-from forecasting_models import LSTMCloseFM
+# from forecasting_models import LSTMCloseFM
 import yfinance as yf
 import os
 import psutil
 import pkg_resources
-import pandas as pd
+# import pandas as pd
 import json
 
 
@@ -220,11 +220,11 @@ async def metal_forecast(metal_id: str):
                 detail="No data found for the given parameters",
             )
 
-        dataframe = pd.read_csv(
-            "data/gold_futures_with_indicators.csv",
-            parse_dates=[0],
-            index_col=0,
-        )
+        # dataframe = pd.read_csv(
+        #     "data/gold_futures_with_indicators.csv",
+        #     parse_dates=[0],
+        #     index_col=0,
+        # )
 
         # Load existing model
         path: str = "baseline_model"
@@ -288,11 +288,11 @@ async def metal_forcast_value_of_units(metal_id: str, unit="h", value=24):
         if unit not in ["h", "d", "m"]:
             raise HTTPException(status_code=400, detail="Wrong unit parameter")
 
-        dataframe = pd.read_csv(
-            "data/gold_futures_with_indicators.csv",
-            parse_dates=[0],
-            index_col=0,
-        )
+        # dataframe = pd.read_csv(
+        #     "data/gold_futures_with_indicators.csv",
+        #     parse_dates=[0],
+        #     index_col=0,
+        # )
 
         # Load existing model
         path: str = "baseline_model"

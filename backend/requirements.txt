@@ -15,3 +15,5 @@ pytest
 httpx
 flake8
 tensorflow
+matplotlib
+pyswarms

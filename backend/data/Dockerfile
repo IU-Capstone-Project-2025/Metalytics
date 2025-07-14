@@ -7,7 +7,7 @@ WORKDIR /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the script and any required files
-COPY data_update.py .
+COPY data_updater.py .
 COPY .env .  # For environment variables
 
 # Run the script

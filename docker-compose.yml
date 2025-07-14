@@ -15,7 +15,7 @@ services:
     restart: unless-stopped
   
   data-updater:
-    build: ./backend/data
+    build: ./data
     restart: on-failure
     depends_on:
       - db

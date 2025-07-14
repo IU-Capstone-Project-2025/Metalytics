@@ -15,7 +15,7 @@ services:
     restart: unless-stopped
   
   data-updater:
-    build: ./backend/data/Dockerfile
+    build: ./backend/data
     restart: on-failure
     depends_on:
       - db
@@ -23,7 +23,7 @@ services:
       - PYTHONUNBUFFERED=1
 
   db:
-    image: postgres:15
+    image: postgres:17
     environment:
       POSTGRES_DB: metalytics
       POSTGRES_USER: ${DB_USER:-postgres}

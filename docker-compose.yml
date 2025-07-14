@@ -37,8 +37,8 @@ services:
 
   data-updater:
     build:
-      context: .
-      dockerfile: Dockerfile.data_update
+      context: ./data
+      dockerfile: Dockerfile
     depends_on:
       db:
         condition: service_healthy

@@ -8,7 +8,7 @@ from sklearn.metrics import (
 )
 import os
 from forecasting_models import ForecastModel, ClosePriceFM
-from data_loader import GoldDataLoader
+from backend.data.data_loader import GoldDataLoader
 from filter import SGFilter
 
 

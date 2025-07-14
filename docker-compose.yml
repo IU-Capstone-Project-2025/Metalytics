@@ -1,6 +1,7 @@
 version: '3.9'
 
 services:
+
   backend:
     build: ./backend
     ports:
@@ -12,3 +13,27 @@ services:
     ports:
       - "3000:80"
     restart: unless-stopped
+  
+  data-updater:
+    build:
+      context: .
+      dockerfile: Dockerfile.data_update
+    restart: on-failure
+    depends_on:
+      - db
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: metalytics
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:

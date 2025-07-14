@@ -2,7 +2,9 @@ from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
-from forecasting_framework import ForecastFramework
+# from forecasting_framework import ForecastFramework
+from get_forecast_from_db import get_prices_from_db
+from dotenv import load_dotenv
 # from forecasting_models import LSTMCloseFM
 import yfinance as yf
 import os
@@ -21,6 +23,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+load_dotenv()
+# Параметры подключения к БД (замените на свои)
+db_params = {
+    'dbname': os.getenv('DB_NAME'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'host': os.getenv('DB_HOST'),
+    'port': os.getenv('DB_PORT')
+}
 
 def get_system_metrics() -> Dict[str, Any]:
     """Optional function to gather system metrics"""
@@ -225,41 +237,42 @@ async def metal_forecast(metal_id: str):
         #     parse_dates=[0],
         #     index_col=0,
         # )
-
         # Load existing model
-        path: str = "baseline_model"
-        fm = ForecastFramework.load_from_file(
-            path,
-            # dataframe,
-            # forecast_model=LSTMCloseFM(),
-            # name="lstm_model",
-        )
+        # path: str = "baseline_model"
+        # fm = ForecastFramework.load_from_file(
+        #     path,
+        #     # dataframe,
+        #     # forecast_model=LSTMCloseFM(),
+        #     # name="lstm_model",
+        # )
 
         # Create forecast
-        unit = "h"  # units of time
+        # unit = "h"  # units of time
         value = 24  # value of units
 
-        # Obtain pandas series with forecasted data
-        forecast = fm.create_forecast(value=value, unit=unit)
-        if forecast.empty:
-            raise HTTPException(
-                status_code=404, detail="No forecast. Something goes wrong"
-            )
+        json_data = get_prices_from_db(metal_id=1, db_params=db_params, limit=value)
 
-        formatted_data = []
-        for column_name in forecast.index:
-            if isinstance(column_name, str):
-                timestamp = (
-                    column_name.split("+")[0].split("-")[0]
-                    if "+" in column_name or "-" in column_name
-                    else column_name
-                )
-            else:
-                timestamp = column_name.strftime("%Y-%m-%dT%H:%M:%SZ")
-            price = float(forecast[column_name])
-            formatted_data.append({"timestamp": timestamp, "price": price})
+        # # Obtain pandas series with forecasted data
+        # forecast = fm.create_forecast(value=value, unit=unit)
+        # if forecast.empty:
+        #     raise HTTPException(
+        #         status_code=404, detail="No forecast. Something goes wrong"
+        #     )
 
-        return formatted_data
+        # formatted_data = []
+        # for column_name in forecast.index:
+        #     if isinstance(column_name, str):
+        #         timestamp = (
+        #             column_name.split("+")[0].split("-")[0]
+        #             if "+" in column_name or "-" in column_name
+        #             else column_name
+        #         )
+        #     else:
+        #         timestamp = column_name.strftime("%Y-%m-%dT%H:%M:%SZ")
+        #     price = float(forecast[column_name])
+        #     formatted_data.append({"timestamp": timestamp, "price": price})
+
+        return json_data
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -268,6 +281,7 @@ async def metal_forecast(metal_id: str):
 @app.get("/forecast/{metal_id}/days")
 async def metal_forcast_value_of_units(metal_id: str, unit="h", value=24):
     """
+    WARNING! only works for unit = "h"
     Get a metal price forecast for value number of selected unit
     - metal_id: Metal name - e.g. "Gold", "Silver", "Zinc"
     - unit: hour, day or months - ['h', 'd', 'm']
@@ -294,36 +308,37 @@ async def metal_forcast_value_of_units(metal_id: str, unit="h", value=24):
         #     index_col=0,
         # )
 
-        # Load existing model
-        path: str = "baseline_model"
-        fm = ForecastFramework.load_from_file(
-            path,
-            # dataframe,
-            # forecast_model=LSTMCloseFM(),
-            # name="lstm_model",
-        )
+        # # Load existing model
+        # path: str = "baseline_model"
+        # fm = ForecastFramework.load_from_file(
+        #     path,
+        #     # dataframe,
+        #     # forecast_model=LSTMCloseFM(),
+        #     # name="lstm_model",
+        # )
 
-        # Obtain pandas series with forecasted data
-        forecast = fm.create_forecast(value=value, unit=unit)
-        if forecast.empty:
-            raise HTTPException(
-                status_code=404, detail="No forecast. Something went wrong"
-            )
+        # # Obtain pandas series with forecasted data
+        # forecast = fm.create_forecast(value=value, unit=unit)
+        # if forecast.empty:
+        #     raise HTTPException(
+        #         status_code=404, detail="No forecast. Something went wrong"
+        #     )
 
-        formatted_data = []
-        for column_name in forecast.index:
-            if isinstance(column_name, str):
-                timestamp = (
-                    column_name.split("+")[0].split("-")[0]
-                    if "+" in column_name or "-" in column_name
-                    else column_name
-                )
-            else:
-                timestamp = column_name.strftime("%Y-%m-%dT%H:%M:%SZ")
-            price = float(forecast[column_name])
-            formatted_data.append({"timestamp": timestamp, "price": price})
-
-        return formatted_data
+        # formatted_data = []
+        # for column_name in forecast.index:
+        #     if isinstance(column_name, str):
+        #         timestamp = (
+        #             column_name.split("+")[0].split("-")[0]
+        #             if "+" in column_name or "-" in column_name
+        #             else column_name
+        #         )
+        #     else:
+        #         timestamp = column_name.strftime("%Y-%m-%dT%H:%M:%SZ")
+        #     price = float(forecast[column_name])
+        #     formatted_data.append({"timestamp": timestamp, "price": price})
+        json_data = get_prices_from_db(metal_id=1, db_params=db_params, limit=value)
+        
+        return json_data
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -382,7 +397,7 @@ def get_package_version(package_name: str) -> str:
         return "N/A"
 
 
-# # delete it before push
-# import uvicorn
-# if __name__ == "__main__":
-#     uvicorn.run("main:app")
+# delete it before push
+import uvicorn
+if __name__ == "__main__":
+    uvicorn.run("main:app")

@@ -1,5 +1,3 @@
-fastapi
-uvicorn
 numpy
 scikit-learn
 pandas
@@ -19,3 +17,5 @@ matplotlib
 pyswarms
 psycopg2-binary
 python-dotenv
+requests
+bs4

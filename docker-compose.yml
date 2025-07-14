@@ -1,6 +1,14 @@
 version: '3.9'
 
 services:
+  
+  data-updater:
+    build: ./data
+    restart: on-failure
+    depends_on:
+      - db
+    environment:
+      - PYTHONUNBUFFERED=1
 
   backend:
     build: ./backend
@@ -13,14 +21,6 @@ services:
     ports:
       - "3000:80"
     restart: unless-stopped
-  
-  data-updater:
-    build: ./data
-    restart: on-failure
-    depends_on:
-      - db
-    environment:
-      - PYTHONUNBUFFERED=1
 
   db:
     image: postgres:17

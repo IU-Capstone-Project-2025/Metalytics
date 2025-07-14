@@ -221,24 +221,32 @@ def compose_forecast_frame(data: np.array, features: np.array, lag: int) -> Tupl
     return X
 
 
-class VolumeFM(ForecastModel):
+class XGBoostFM(ForecastModel):
     """
-    Forecasting model for `Volume` target.
-
-    Model selected: XGBRegressor
+    XGBRegressor forecasting model for selected target.
 
     Attributes:
-        model_ (BaseEstimator): regression model.
-        df_ (pd.DataFrame): dataset built for training
+        model_ (XGBRegressor): regression model.
+        df_ (pd.DataFrame): dataset built for training.
+        target (str): target column.
+        stationary (bool): True if series is stationary (first difference is irrelevant).
         lag (int): number of lagged features.
+        last_value_ (float): last observed value of the series (for differenced predictions).
     """
 
     model_: BaseEstimator
+    scaler_: MinMaxScaler
     df_: pd.DataFrame
+    target: str
+    stationary: bool
     lag: int
+    last_value_: float
 
-    def __init__(self, lag: int = 25):
+    def __init__(self, target: str, stationary: bool = True, lag: int = 60):
+        self.target = target
+        self.stationary = stationary
         self.lag = lag
+        self.last_value_ = None
 
     def preprocess_(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -266,7 +274,12 @@ class VolumeFM(ForecastModel):
 
         df = df.copy()
 
-        df = pd.DataFrame(self.preprocess_(df['Volume']))
+        df = pd.DataFrame(self.preprocess_(df[self.target]))
+
+        # Obtain first difference (if relevant)
+        if (not self.stationary):
+            self.last_value_ = df.iloc[-1][self.target]
+            df = df.diff().dropna()
 
         # Day of Week (0=Monday, 6=Sunday)
         df['day_of_week'] = df.index.dayofweek
@@ -303,7 +316,7 @@ class VolumeFM(ForecastModel):
         for feature in ['year', 'month_sin', 'month_cos', 'hour_sin', 'hour_cos']:
             df[feature] = MinMaxScaler().fit_transform(df[[feature]])
 
-        return df
+        return df.astype(np.float32)
 
     def build_forecast_data(self, df: pd.DataFrame):
         """
@@ -318,7 +331,7 @@ class VolumeFM(ForecastModel):
 
         df = df.copy()
 
-        df = pd.DataFrame(df['Volume'])
+        df = pd.DataFrame(df[self.target])
 
         # Day of Week (0=Monday, 6=Sunday)
         df['day_of_week'] = df.index.dayofweek
@@ -355,7 +368,7 @@ class VolumeFM(ForecastModel):
         for feature in ['year', 'month_sin', 'month_cos', 'hour_sin', 'hour_cos']:
             df[feature] = MinMaxScaler().fit_transform(df[[feature]])
 
-        return df
+        return df.astype(np.float32)
 
     def cross_validation(self,
                          df: pd.DataFrame,
@@ -444,28 +457,33 @@ class VolumeFM(ForecastModel):
 
     def predict(self, date_range: pd.DatetimeIndex) -> pd.Series:
 
-        prediction_df = self.build_forecast_data(pd.DataFrame(index=date_range, columns=['Volume']))
+        prediction_df = self.build_forecast_data(pd.DataFrame(index=date_range, columns=[self.target]))
 
         history_df = self.df_.copy()
 
         for date in date_range:
-            feature_columns = [column for column in prediction_df.columns if column != 'Volume']
+            feature_columns = [column for column in prediction_df.columns if column != self.target]
             features = prediction_df.loc[date, feature_columns].copy()
 
             x_ = compose_forecast_frame(history_df.to_numpy(), features.to_numpy(), self.lag)
             y_ = self.model_.predict(x_)
 
-            features.loc['Volume'] = y_
+            features.loc[self.target] = y_
             history_df = pd.concat([history_df, features.to_frame().T])
 
-        return history_df.loc[date_range[0]:date_range[-1], 'Volume']
+        y_pred = history_df.loc[date_range[0]:date_range[-1], self.target]
+
+        if (self.stationary):
+            return y_pred
+
+        return self.last_value_ + np.cumsum(y_pred)
 
     def dump(self, path: str) -> None:
-        joblib.dump(self.model_, f"{path}/Volume_predictor.joblib")
+        joblib.dump(self.model_, f"{path}/{self.target}_predictor.joblib")
 
     def load(self, df: pd.DataFrame, path: str):
         self.df_ = self.build(df)
-        self.model_ = joblib.load(f"{path}/Volume_predictor.joblib")
+        self.model_ = joblib.load(f"{path}/{self.target}_predictor.joblib")
 
 
 class ClosePriceFM(ForecastModel):
@@ -491,14 +509,19 @@ class ClosePriceFM(ForecastModel):
     train_size: float
     indicators: List[str] = ['EMA20', 'RSI14', 'ATR14', 'MACD', 'MACD_Signal', 'MACD_Hist']
 
-    def __init__(self, lag: int = 25, train_size: float = 0.7):
+    def __init__(
+            self,
+            lag: int = 50,
+            train_size: float = 0.7,
+            feature_models: Dict[str, ForecastModel] = {
+                'High': XGBoostFM('High', stationary=False),
+                'Low': XGBoostFM('Low', stationary=False),
+                'Volume': XGBoostFM('Volume')
+            }
+    ):
         self.lag = lag
         self.train_size = train_size
-        self.feature_models = {
-            'High': SLFM('High'),
-            'Low': SLFM('Low'),
-            'Volume': VolumeFM()
-        }
+        self.feature_models = feature_models
 
     def build(self, df: pd.DataFrame):
 

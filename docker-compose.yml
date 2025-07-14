@@ -11,6 +11,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - metalytics_net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -21,6 +23,8 @@ services:
     build: ./backend
     ports:
       - "8000:8000"
+    networks:
+      - metalytics_net
     depends_on:
       db:
         condition: service_healthy
@@ -31,6 +35,8 @@ services:
     build: ./frontend
     ports:
       - "3000:80"
+    networks:
+      - metalytics_net
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -39,11 +45,16 @@ services:
     build:
       context: ./data
       dockerfile: Dockerfile
+    networks:
+      - metalytics_net
     depends_on:
       db:
         condition: service_healthy
     environment:
       - DB_HOST=db
-
+  
+  networks:
+    metalytics_net:
+      driver: bridge
 volumes:
   postgres_data:

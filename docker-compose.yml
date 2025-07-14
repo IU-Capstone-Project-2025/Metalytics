@@ -15,9 +15,7 @@ services:
     restart: unless-stopped
   
   data-updater:
-    build:
-      context: .
-      dockerfile: Dockerfile.data_update
+    build: ./backend/data/Dockerfile
     restart: on-failure
     depends_on:
       - db

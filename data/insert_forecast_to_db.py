@@ -10,8 +10,9 @@ from dotenv import load_dotenv
 def update_predicted_prices(data, metal_id, db_params):
     """
     Обновляет прогнозируемые цены для указанного металла:
-    1. Удаляет все старые прогнозы для этого металла
-    2. Вставляет новые прогнозы
+    1. Проверяет существование таблицы
+    2. Удаляет все старые прогнозы для этого металла
+    3. Вставляет новые прогнозы
     
     :param data: pandas Series с временными метками в индексе и ценами в значениях
     :param metal_id: ID металла из таблицы metals
@@ -24,7 +25,32 @@ def update_predicted_prices(data, metal_id, db_params):
         conn = psycopg2.connect(**db_params)
         cursor = conn.cursor()
         
-        # 1. Удаляем все старые прогнозы для этого металла
+        # 1. Проверяем существование таблицы
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT 1 
+                FROM information_schema.tables 
+                WHERE table_name = 'predicted_prices'
+            );
+        """)
+        table_exists = cursor.fetchone()[0]
+        
+        if not table_exists:
+            print("Таблица predicted_prices не существует. Создаём...")
+            cursor.execute("""
+                CREATE TABLE predicted_prices (
+                    id SERIAL PRIMARY KEY,
+                    metal_id INTEGER NOT NULL REFERENCES metals(id),
+                    timestamp TIMESTAMPTZ NOT NULL,
+                    price DECIMAL(20, 6) NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_predicted_prices_metal_timestamp 
+                ON predicted_prices (metal_id, timestamp);
+            """)
+            conn.commit()
+            print("Таблица predicted_prices успешно создана")
+
+        # 2. Удаляем все старые прогнозы для этого металла
         delete_query = sql.SQL("""
             DELETE FROM predicted_prices 
             WHERE metal_id = %s
@@ -33,7 +59,7 @@ def update_predicted_prices(data, metal_id, db_params):
         cursor.execute(delete_query, (int(metal_id),))  # Явное преобразование в int
         print(f"Удалены старые прогнозы для metal_id={metal_id}")
         
-        # 2. Вставляем новые прогнозы
+        # 3. Вставляем новые прогнозы
         if not data.empty:
             # Преобразуем Series в список кортежей, явно преобразовывая типы
             records = []

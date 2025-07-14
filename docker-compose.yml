@@ -53,8 +53,8 @@ services:
     environment:
       - DB_HOST=db
   
-  networks:
-    metalytics_net:
-      driver: bridge
+networks:
+  metalytics_net:
+    driver: bridge
 volumes:
   postgres_data:

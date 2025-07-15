@@ -1,9 +1,10 @@
 version: '3.9'
-env_file: .env
 
 services:
   db:
     image: postgres:13
+    env_file: 
+      - .env  # File containing only DB credentials
     environment:
       POSTGRES_DB: metalytics
       POSTGRES_USER: ${DB_USER:-postgres}
@@ -46,7 +47,8 @@ services:
     build:
       context: ./data
       dockerfile: Dockerfile
-    
+    env_file: 
+      - .env  # File containing only DB credentials
     networks:
       - metalytics_net
     depends_on:

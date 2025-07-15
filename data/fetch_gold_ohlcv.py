@@ -2,6 +2,7 @@ import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
 
+
 def fetch_gold_ohlcv():
     ticker = "GC=F"
     interval = "1h"
@@ -19,7 +20,6 @@ def fetch_gold_ohlcv():
         date_ranges.append((cursor, next_cursor))
         cursor = next_cursor
 
-
     all_data = []
     for start, end in date_ranges:
         print(f"⬇️ Загружаю {start.date()} ➡️ {end.date()} ...")
@@ -28,7 +28,6 @@ def fetch_gold_ohlcv():
         )
         if not df.empty:
             all_data.append(df)
-
 
     if all_data:
         full_df = pd.concat(all_data)

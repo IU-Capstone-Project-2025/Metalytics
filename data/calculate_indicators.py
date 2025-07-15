@@ -1,6 +1,6 @@
 import pandas as pd
 import ta
-import os
+
 
 def calculate_indicators():
     input_path = "gold_futures_yahoo_1h.csv"

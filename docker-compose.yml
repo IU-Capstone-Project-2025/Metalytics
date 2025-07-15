@@ -43,12 +43,6 @@ services:
       - /app/node_modules
 
   data-updater:
-    environment:
-        - DB_HOST=db
-        - DB_PORT=5432
-        - DB_NAME=metalytics
-        - DB_USER=${DB_USER:-postgres}          # must match POSTGRES_USER
-        - DB_PASSWORD=${DB_PASSWORD}  # must match POSTGRES_PASSWORD
     build:
       context: ./data
       dockerfile: Dockerfile
@@ -60,6 +54,10 @@ services:
         condition: service_healthy
     environment:
       - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=metalytics
+      - DB_USER=${DB_USER:-postgres}  # must match POSTGRES_USER
+      - DB_PASSWORD=${DB_PASSWORD}  # must match POSTGRES_PASSWORD
   
 networks:
   metalytics_net:

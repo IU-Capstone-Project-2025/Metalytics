@@ -28,7 +28,7 @@ CREATE INDEX IF NOT EXISTS idx_predicted_prices_timestamp ON predicted_prices (t
 CREATE INDEX IF NOT EXISTS idx_historical_prices_metal ON historical_prices (metal_id);
 CREATE INDEX IF NOT EXISTS idx_predicted_prices_metal ON predicted_prices (metal_id);
 
-INSERT INTO metals (name) VALUES 
-    ('gold'),
-    ('silver'),
-    ('platinum');
+INSERT INTO metals (id, name) VALUES 
+    (1, 'gold'),
+    (2, 'silver'),
+    (3, 'platinum');

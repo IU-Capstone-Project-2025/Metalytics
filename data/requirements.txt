@@ -7,5 +7,6 @@ yfinance
 matplotlib
 psycopg2-binary
 python-dotenv
+tensorflow
 
 flake8

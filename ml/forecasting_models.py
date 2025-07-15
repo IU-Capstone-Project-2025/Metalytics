@@ -419,13 +419,13 @@ class XGBoostFM(ForecastModel):
         self,
         df: pd.DataFrame,
         params: Dict[str, Union[float, str]] = {
-            "n_estimators": 1000,
-            "learning_rate": 0.01,
-            "max_depth": 6,
-            "min_child_weight": 1,
+            "n_estimators": 3200,
+            "learning_rate": 0.1,
+            "max_depth": 4,
+            "min_child_weight": 8.7,
             "subsample": 1,
             "colsample_bytree": 1,
-            "gamma": 2.84
+            "gamma": 3
         }
     ):
         self.df_ = self.build(df)
@@ -594,7 +594,6 @@ class ClosePriceFM(ForecastModel):
                 subsample=params['subsample'],
                 colsample_bytree=params['colsample_bytree'],
                 gamma=params['gamma'],
-                scale_pos_weight=np.sqrt(len(y_train)/y_train.sum()),
                 tree_method='hist',
                 booster=None,
                 objective='reg:squarederror',
@@ -613,13 +612,13 @@ class ClosePriceFM(ForecastModel):
         self,
         df: pd.DataFrame,
         params: Dict[str, Union[float, str]] = {
-            "n_estimators": 1000,
-            "learning_rate": 0.01,
-            "max_depth": 3,
-            "min_child_weight": 3,
-            "subsample": 1,
-            "colsample_bytree": 1,
-            "gamma": 2.03
+            "n_estimators": 800,
+            "learning_rate": 0.1,
+            "max_depth": 7,
+            "min_child_weight": 4,
+            "subsample": 0.7,
+            "colsample_bytree": 1.0,
+            "gamma": 2
         }
     ):
         self.df_ = self.build(df)

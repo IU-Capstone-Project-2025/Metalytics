@@ -195,4 +195,4 @@ cython_debug/
 .cursorindexingignore
 
 # Bash scripts
-replace_localhost.sh
+.sh

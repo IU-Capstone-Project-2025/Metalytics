@@ -1,6 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.dates import MonthLocator, DateFormatter
+from matplotlib.dates import DayLocator, DateFormatter
 from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
 import os
 from forecasting_models import ForecastModel, ClosePriceFM
@@ -29,7 +29,7 @@ class ForecastFramework:
             target_columns=['Close'],
             forecast_model=ClosePriceFM(),
             name="baseline_model",
-            train_size=0.7
+            train_size=1.0
     ):
         self.df = data_loader.load_data().asfreq('30min').bfill().ffill()
         self.filter = SGFilter()
@@ -85,8 +85,8 @@ class ForecastFramework:
         for target_idx in range(true_values.shape[1]):
             ax[target_idx, 0].plot(self.test_set.index, true_values)
             ax[target_idx, 0].plot(self.test_set.index, forecast_values, linestyle='--')
-            ax[target_idx, 0].xaxis.set_major_locator(MonthLocator(interval=1))
-            ax[target_idx, 0].xaxis.set_major_formatter(DateFormatter('%b-%Y'))
+            ax[target_idx, 0].xaxis.set_major_locator(DayLocator(interval=1))
+            ax[target_idx, 0].xaxis.set_major_formatter(DateFormatter('%b, %d'))
             ax[target_idx, 0].set_ylabel(self.target_columns[target_idx])
         return fig
 
@@ -109,7 +109,7 @@ class ForecastFramework:
         target_columns=['Close'],
         forecast_model: ForecastModel = ClosePriceFM(),
         name="baseline_model",
-        train_size=0.7
+        train_size=1.0
     ):
         """
         (Constructor)
@@ -147,7 +147,7 @@ class ForecastFramework:
 
     def forecast_interval_(self, value: int, unit: str) -> pd.DatetimeIndex:
         """
-        Produces date range from the last available observation + 1 hour
+        Produces date range from the last available observation + 30 min
         to the date after `value` number of `unit`s.
 
         Parameters:
@@ -159,7 +159,7 @@ class ForecastFramework:
         """
         date_index = self.df.index
         return pd.date_range(
-            date_index[-1] + pd.Timedelta(value=1, unit='h'),
-            date_index[-1] + pd.Timedelta(value=1, unit='h') + pd.Timedelta(value=value, unit=unit),
-            freq='h'
+            date_index[-1] + pd.Timedelta(value=30, unit='min'),
+            date_index[-1] + pd.Timedelta(value=30, unit='min') + pd.Timedelta(value=value, unit=unit),
+            freq='30min'
         )

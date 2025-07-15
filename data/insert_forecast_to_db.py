@@ -42,7 +42,7 @@ Valid IDs are 1 (gold), 2 (silver), 3 (platinum)")
             delete_query,
             (int(metal_id),)
         )  # Явное преобразование в int
-        print(f"Удалены старые прогнозы для metal_id={metal_id}")
+        print(f"Old forecasts have been removed for metal_id={metal_id}")
 
         # 3. Вставляем новые прогнозы
         if not data.empty:
@@ -71,15 +71,15 @@ Valid IDs are 1 (gold), 2 (silver), 3 (platinum)")
 
             # Выполняем массовую вставку
             cursor.executemany(insert_query, records)
-            print(f"Вставлено {len(records)} новых записей \
+            print(f"Inserted {len(records)} new records \
 для metal_id={metal_id}")
 
         # Фиксируем изменения
         conn.commit()
-        print("Обновление завершено успешно")
+        print("The update was completed successfully.")
 
     except Exception as e:
-        print(f"Ошибка при обновлении данных: {e}")
+        print(f"Error updating data: {e}")
         if conn:
             conn.rollback()
         raise  # Повторно поднимаем исключение для отладки

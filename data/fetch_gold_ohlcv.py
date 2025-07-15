@@ -38,3 +38,6 @@ def fetch_gold_ohlcv():
         print(f" Данные сохранены в {save_path}")
     else:
         print(" Не удалось загрузить данные.")
+
+# if __name__ == "__main__":
+#     fetch_gold_ohlcv()

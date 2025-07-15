@@ -4,3 +4,5 @@ python-dotenv
 yfinance
 psutil
 uvicorn
+
+flake8

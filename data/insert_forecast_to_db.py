@@ -30,7 +30,7 @@ def update_predicted_prices(data, metal_id, db_params):
         cursor.execute("SELECT id FROM metals WHERE id = %s", (metal_id,))
         if not cursor.fetchone():
             raise ValueError(f"Invalid metal_id: {metal_id}. \
-                             Valid IDs are 1 (gold), 2 (silver), 3 (platinum)")
+Valid IDs are 1 (gold), 2 (silver), 3 (platinum)")
 
         # 2. Удаляем все старые прогнозы для этого металла
         delete_query = sql.SQL("""
@@ -72,7 +72,7 @@ def update_predicted_prices(data, metal_id, db_params):
             # Выполняем массовую вставку
             cursor.executemany(insert_query, records)
             print(f"Вставлено {len(records)} новых записей \
-                  для metal_id={metal_id}")
+для metal_id={metal_id}")
 
         # Фиксируем изменения
         conn.commit()

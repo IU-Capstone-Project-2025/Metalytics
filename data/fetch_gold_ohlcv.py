@@ -22,7 +22,7 @@ def fetch_gold_ohlcv():
 
     all_data = []
     for start, end in date_ranges:
-        print(f"⬇️ Загружаю {start.date()} ➡️ {end.date()} ...")
+        print(f"Loading {start.date()} -> {end.date()} ...")
         df = yf.download(
             ticker, start=start, end=end, interval=interval, progress=False
         )
@@ -34,9 +34,9 @@ def fetch_gold_ohlcv():
         full_df = full_df[~full_df.index.duplicated()]
         full_df.sort_index(inplace=True)
         full_df.to_csv(save_path)
-        print(f" Данные сохранены в {save_path}")
+        print(f" Data saved in {save_path}")
     else:
-        print(" Не удалось загрузить данные.")
+        print(" Failed to load data.")
 
 # if __name__ == "__main__":
 #     fetch_gold_ohlcv()

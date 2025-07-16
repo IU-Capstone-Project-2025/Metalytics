@@ -75,11 +75,17 @@ async def metals_news(metal_id: str):
     """
     try:
         metal_id = metal_id.lower()
+        file_path = "../data/metalinfo_news.json"
+        
+        # Debugging - check if file exists
+        if not os.path.exists(file_path):
+            return {"error": f"File not found at {os.path.abspath(file_path)}"}
+        
         if metal_id not in Metal_dict.keys():
             raise HTTPException(
                 status_code=404, detail="No matches for this metal"
             )
-        with open('../data/metalinfo_news.json') as f:
+        with open(file_path) as f:
             d = [x for x in json.load(f) if x['keyword'] == metal_id.lower()]
         if not len(d):
             raise HTTPException(

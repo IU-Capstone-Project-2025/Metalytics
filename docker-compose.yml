@@ -56,9 +56,11 @@ services:
       db:
         condition: service_healthy
     environment:
-      POSTGRES_DB: metalytics
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: metalytics
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD}
   
 networks:
   metalytics_net:

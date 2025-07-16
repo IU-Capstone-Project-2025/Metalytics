@@ -1,5 +1,3 @@
-CREATE DATABASE metalytics;
-
 \connect metalytics;
 
 CREATE TABLE IF NOT EXISTS metals (

@@ -14,9 +14,5 @@ class SGFilter:
     def filter(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
         for feature in self.features:
-            df[feature] = savgol_filter(
-                df[feature],
-                window_length=self.window_length,
-                polyorder=self.polyorder
-            )
+            df[feature] = savgol_filter(df[feature], window_length=self.window_length, polyorder=self.polyorder)
         return df

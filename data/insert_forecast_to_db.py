@@ -2,6 +2,7 @@ import pandas as pd
 import psycopg2
 from psycopg2 import sql
 from forecasting_framework import ForecastFramework
+from forecasting_models import ClosePriceFM
 import numpy as np
 import os
 from dotenv import load_dotenv
@@ -91,17 +92,16 @@ Valid IDs are 1 (gold), 2 (silver), 3 (platinum)")
 
 
 def insert_forecast_to_db():
-    path: str = "baseline_model"
-    fm = ForecastFramework.load_from_file(
-        path,
-        # dataframe,
-        # forecast_model=LSTMCloseFM(),
-        # name="lstm_model",
-    )
+    # Load existing model
+    path: str = "xgb_model"
+    fm = ForecastFramework.load_from_file(path=path,
+                                          target_columns=['Close'],
+                                          forecast_model=ClosePriceFM()
+                                          )
 
     # Create forecast
-    unit = "h"  # units of time
-    value = 24 * 10  # value of units
+    unit = 'h'  # units of time (e.g. 'h' for hour, 'd' for days, 'm' for months)
+    value = 24   # value of units
 
     # Obtain pandas series with forecasted data
     forecast = fm.create_forecast(value=value, unit=unit)

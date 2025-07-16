@@ -75,7 +75,7 @@ async def metals_news(metal_id: str):
     """
     try:
         metal_id = metal_id.lower()
-        file_path = "../data/metalinfo_news.json"
+        file_path = "/metalinfo_news.json"
         
         # Debugging - check if file exists
         if not os.path.exists(file_path):

@@ -68,7 +68,7 @@ def parse_metalinfo_news(page_url, metal_list):
 
 def save_to_json(data, filename='metalinfo_news.json'):
     try:
-        directory = "data"
+        directory = "../backend"
         os.makedirs(directory, exist_ok=True)
         filepath = os.path.join(directory, filename)
         with open(filepath, 'w', encoding='utf-8') as f:

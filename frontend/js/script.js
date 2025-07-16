@@ -322,7 +322,7 @@ document.addEventListener("DOMContentLoaded", () => {
     button.addEventListener('click', async () => {
       selectedMetal = button.dataset.metal;
       activeMetal();
-      if (selectedMetal === 'silver' || selectedMetal === 'zinc') {
+      if (selectedMetal === 'zinc') {
         selectedDate = 'day';
         setPredictedButtonAvailability(false);
         document.querySelectorAll('.graph__button[data-interval]').forEach(btn => {
@@ -334,7 +334,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fetchData('day');
       } 
       
-      else if (selectedMetal === 'gold') {
+      else if (selectedMetal === 'gold' || selectedMetal === 'silver') {
         selectedDate = 'day';
         setPredictedButtonAvailability(true);
         document.querySelectorAll('.graph__button[data-interval]').forEach(btn => {

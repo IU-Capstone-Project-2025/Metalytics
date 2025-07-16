@@ -79,7 +79,7 @@ async def metals_news(metal_id: str):
             raise HTTPException(
                 status_code=404, detail="No matches for this metal"
             )
-        with open('data/metalinfo_news.json') as f:
+        with open('../data/metalinfo_news.json') as f:
             d = [x for x in json.load(f) if x['keyword'] == metal_id.lower()]
         if not len(d):
             raise HTTPException(
@@ -287,7 +287,7 @@ async def metal_forcast_value_of_units(metal_id: str, unit="h", value=24):
     - unit: hour, day or months - ['h', 'd', 'm']
     - value: value of units
     """
-    value = int(value)
+    # value = int(value)
     print(f"value: {value}")
     try:
         metal_id = metal_id.lower()

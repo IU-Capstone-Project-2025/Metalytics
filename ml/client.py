@@ -1,29 +1,29 @@
 from forecasting_framework import ForecastFramework
-import pandas as pd
+from forecasting_models import ClosePriceFM
 
 
 if __name__ == "__main__":
 
-    # Load dataframe
-    dataframe = pd.read_csv("data/gold_futures_with_indicators.csv", parse_dates=[0], index_col=0)
-
     # Option 1:
     #
     # Create a new framework object
-    # fm = ForecastFramework(dataframe)
+    # fm = ForecastFramework(target_columns=['Close'], forecast_model=ClosePriceFM(), name='xgb_model')
 
     # Train model
     # fm.train_model()
 
     # Dump model
-    # path: str = "baseline_model"
-    # fm.dump_model()
+    # path: str = "xgb_model"
+    # fm.dump_model(path=path)
 
     # Option 2:
     #
     # Load existing model
-    path: str = "baseline_model"
-    fm = ForecastFramework.load_from_file(path, dataframe)
+    path: str = "xgb_model"
+    fm = ForecastFramework.load_from_file(path=path,
+                                          target_columns=['Close'],
+                                          forecast_model=ClosePriceFM()
+                                          )
 
     # Create forecast
     unit = 'h'  # units of time (e.g. 'h' for hour, 'd' for days, 'm' for months)

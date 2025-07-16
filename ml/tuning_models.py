@@ -3,6 +3,8 @@ import numpy as np
 from sklearn.metrics import mean_squared_error
 from abc import ABC, abstractmethod
 from forecasting_models import ForecastModel
+from filter import SGFilter
+from data_loader import GoldDataLoader
 from typing import Dict, Any
 from pyswarms.single import GlobalBestPSO
 
@@ -34,6 +36,7 @@ class Tuner(ABC):
 class TuneXGBoost(Tuner):
     """PSO optimization for XGBoost hyperparameters"""
     df: pd.DataFrame
+    filter: SGFilter
 
     n_particles: int = 5
     iters: int = 10
@@ -43,17 +46,20 @@ class TuneXGBoost(Tuner):
         np.array([5000, 0.3, 10, 10, 1, 1, 5])        # max values
     )
 
-    K = 20
-    test_size: int = 24*10
+    K = 3
+    test_size: int = 12*10
 
     @property
     def metric(self):
         """Protected metric accessor"""
         return mean_squared_error
 
-    def __init__(self, model: ForecastModel, df: pd.DataFrame):
+    def __init__(self, model: ForecastModel, data_loader: GoldDataLoader = GoldDataLoader()):
         super().__init__(model)
-        self.df = df
+        self.df = data_loader.load_data().asfreq('30min').bfill().ffill()
+        self.df = self.df[self.df.index > '2025-07-01']
+        self.filter = SGFilter()
+        self.df = self.filter.filter(self.df)
 
     def tune(self):
 
@@ -61,7 +67,7 @@ class TuneXGBoost(Tuner):
             scores = []
             for param_set in params_list:
                 params = {
-                    "n_estimators": param_set[0],
+                    "n_estimators": int(param_set[0]),
                     "learning_rate": param_set[1],
                     "max_depth": int(param_set[2]),
                     "min_child_weight": param_set[3],
@@ -84,7 +90,7 @@ class TuneXGBoost(Tuner):
         best_cost, best_params = optimizer.optimize(objective_function, iters=self.iters)
 
         optimized_params = {
-            "n_estimators": best_params[0],
+            "n_estimators": int(best_params[0]),
             'learning_rate': best_params[1],
             'max_depth': int(best_params[2]),
             'min_child_weight': best_params[3],

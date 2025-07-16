@@ -27,8 +27,8 @@ class ForecastModel(ABC):
     @abstractmethod
     def fit(self, df: pd.DataFrame, params: Dict[str, Any]):
         """
-        Creates dataset from `df` and fits the model with parameters
-        to the dataset.
+        Creates dataset from `df` and fits the model
+        with parameters to the dataset.
 
         Parameters:
             df (pd.DataFrame): dataframe from which dataset is built.
@@ -75,8 +75,8 @@ class ForecastModel(ABC):
         metric: Callable = mean_squared_error,
     ) -> float:
         """
-        K-fold cross validation of a given test size to evaluate
-        model performance.
+        K-fold cross validation of a given test size to
+        evaluate model performance.
 
         Parameters:
             df (pd.DataFrame): dataframe.
@@ -184,17 +184,16 @@ class SLFM(ForecastModel):
         )
 
 
-def decompose_tabular_data(data: np.array, h: int) -> Tuple[
-    np.array,
-    np.array
-]:
+def decompose_tabular_data(
+        data: np.array,
+        h: int) -> Tuple[np.array, np.array]:
     """
     Compose features from successive dataset objects using sliding window.
 
     For example, [y_1, y_2, y_3, y_4, ...] (h=2) would produce
 
-        ([ [*y_1, *y_2, y_3[:, 1:]], [*y_2, *y_3, y_4[:, 1:]], ...],
-        [y_3, y_4, ...]).
+        ([ [*y_1, *y_2, y_3[:, 1:]],
+        [*y_2, *y_3, y_4[:, 1:]], ...], [y_3, y_4, ...]).
 
     Here *a means unpacking values from a vector.
 
@@ -219,8 +218,8 @@ def compose_forecast_frame(
     data: np.array, features: np.array, lag: int
 ) -> Tuple[np.array, np.array]:
     """
-    Compose features from the last observations and features of forecast
-    timeframe.
+    Compose features from the last observations and features of
+    forecast timeframe.
 
     For example, [..., y_{n-k}, ..., y_{n-3}, y_{n-2}, y_{n-1}, y_n]
     (lag=2) would produce
@@ -242,24 +241,34 @@ def compose_forecast_frame(
     return X
 
 
-class VolumeFM(ForecastModel):
+class XGBoostFM(ForecastModel):
     """
-    Forecasting model for `Volume` target.
-
-    Model selected: XGBRegressor
+    XGBRegressor forecasting model for selected target.
 
     Attributes:
-        model_ (BaseEstimator): regression model.
-        df_ (pd.DataFrame): dataset built for training
+        model_ (XGBRegressor): regression model.
+        df_ (pd.DataFrame): dataset built for training.
+        target (str): target column.
+        stationary (bool): True if series is stationary
+        (first difference is irrelevant).
         lag (int): number of lagged features.
+        last_value_ (float): last observed value of the series
+        (for differenced predictions).
     """
 
     model_: BaseEstimator
+    scaler_: MinMaxScaler
     df_: pd.DataFrame
+    target: str
+    stationary: bool
     lag: int
+    last_value_: float
 
-    def __init__(self, lag: int = 25):
+    def __init__(self, target: str, stationary: bool = True, lag: int = 60):
+        self.target = target
+        self.stationary = stationary
         self.lag = lag
+        self.last_value_ = None
 
     def preprocess_(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -287,7 +296,12 @@ class VolumeFM(ForecastModel):
 
         df = df.copy()
 
-        df = pd.DataFrame(self.preprocess_(df["Volume"]))
+        df = pd.DataFrame(self.preprocess_(df[self.target]))
+
+        # Obtain first difference (if relevant)
+        if not self.stationary:
+            self.last_value_ = df.iloc[-1][self.target]
+            df = df.diff().dropna()
 
         # Day of Week (0=Monday, 6=Sunday)
         df["day_of_week"] = df.index.dayofweek
@@ -338,7 +352,7 @@ class VolumeFM(ForecastModel):
         ]:
             df[feature] = MinMaxScaler().fit_transform(df[[feature]])
 
-        return df
+        return df.astype(np.float32)
 
     def build_forecast_data(self, df: pd.DataFrame):
         """
@@ -354,7 +368,7 @@ class VolumeFM(ForecastModel):
 
         df = df.copy()
 
-        df = pd.DataFrame(df["Volume"])
+        df = pd.DataFrame(df[self.target])
 
         # Day of Week (0=Monday, 6=Sunday)
         df["day_of_week"] = df.index.dayofweek
@@ -405,7 +419,7 @@ class VolumeFM(ForecastModel):
         ]:
             df[feature] = MinMaxScaler().fit_transform(df[[feature]])
 
-        return df
+        return df.astype(np.float32)
 
     def cross_validation(
         self,
@@ -466,13 +480,13 @@ class VolumeFM(ForecastModel):
         self,
         df: pd.DataFrame,
         params: Dict[str, Union[float, str]] = {
-            "n_estimators": 1000,
-            "learning_rate": 0.01,
-            "max_depth": 6,
-            "min_child_weight": 1,
+            "n_estimators": 3200,
+            "learning_rate": 0.1,
+            "max_depth": 4,
+            "min_child_weight": 8.7,
             "subsample": 1,
             "colsample_bytree": 1,
-            "gamma": 2.84,
+            "gamma": 3,
         },
     ):
         self.df_ = self.build(df)
@@ -483,7 +497,8 @@ class VolumeFM(ForecastModel):
 
         X_train, y_train = decompose_tabular_data(
             train_set.to_numpy(),
-            h=self.lag)
+            h=self.lag
+        )
         X_test, y_test = decompose_tabular_data(
             test_set.to_numpy(),
             h=self.lag
@@ -516,15 +531,14 @@ class VolumeFM(ForecastModel):
     def predict(self, date_range: pd.DatetimeIndex) -> pd.Series:
 
         prediction_df = self.build_forecast_data(
-            pd.DataFrame(index=date_range, columns=["Volume"])
+            pd.DataFrame(index=date_range, columns=[self.target])
         )
 
         history_df = self.df_.copy()
 
         for date in date_range:
             feature_columns = [
-                column for column in
-                prediction_df.columns if column != "Volume"
+                col for col in prediction_df.columns if col != self.target
             ]
             features = prediction_df.loc[date, feature_columns].copy()
 
@@ -533,17 +547,22 @@ class VolumeFM(ForecastModel):
             )
             y_ = self.model_.predict(x_)
 
-            features.loc["Volume"] = y_
+            features.loc[self.target] = y_
             history_df = pd.concat([history_df, features.to_frame().T])
 
-        return history_df.loc[date_range[0]: date_range[-1], "Volume"]
+        y_pred = history_df.loc[date_range[0]: date_range[-1], self.target]
+
+        if self.stationary:
+            return y_pred
+
+        return self.last_value_ + np.cumsum(y_pred)
 
     def dump(self, path: str) -> None:
-        joblib.dump(self.model_, f"{path}/Volume_predictor.joblib")
+        joblib.dump(self.model_, f"{path}/{self.target}_predictor.joblib")
 
     def load(self, df: pd.DataFrame, path: str):
         self.df_ = self.build(df)
-        self.model_ = joblib.load(f"{path}/Volume_predictor.joblib")
+        self.model_ = joblib.load(f"{path}/{self.target}_predictor.joblib")
 
 
 class ClosePriceFM(ForecastModel):
@@ -577,14 +596,19 @@ class ClosePriceFM(ForecastModel):
         "MACD_Hist",
     ]
 
-    def __init__(self, lag: int = 25, train_size: float = 0.7):
+    def __init__(
+        self,
+        lag: int = 50,
+        train_size: float = 0.7,
+        feature_models: Dict[str, ForecastModel] = {
+            "High": XGBoostFM("High", stationary=False),
+            "Low": XGBoostFM("Low", stationary=False),
+            "Volume": XGBoostFM("Volume"),
+        },
+    ):
         self.lag = lag
         self.train_size = train_size
-        self.feature_models = {
-            "High": SLFM("High"),
-            "Low": SLFM("Low"),
-            "Volume": VolumeFM(),
-        }
+        self.feature_models = feature_models
 
     def build(self, df: pd.DataFrame):
 
@@ -663,7 +687,6 @@ class ClosePriceFM(ForecastModel):
                 subsample=params["subsample"],
                 colsample_bytree=params["colsample_bytree"],
                 gamma=params["gamma"],
-                scale_pos_weight=np.sqrt(len(y_train) / y_train.sum()),
                 tree_method="hist",
                 booster=None,
                 objective="reg:squarederror",
@@ -687,13 +710,13 @@ class ClosePriceFM(ForecastModel):
         self,
         df: pd.DataFrame,
         params: Dict[str, Union[float, str]] = {
-            "n_estimators": 1000,
-            "learning_rate": 0.01,
-            "max_depth": 3,
-            "min_child_weight": 3,
-            "subsample": 1,
-            "colsample_bytree": 1,
-            "gamma": 2.03,
+            "n_estimators": 800,
+            "learning_rate": 0.1,
+            "max_depth": 7,
+            "min_child_weight": 4,
+            "subsample": 0.7,
+            "colsample_bytree": 1.0,
+            "gamma": 2,
         },
     ):
         self.df_ = self.build(df)
@@ -808,7 +831,7 @@ class ClosePriceFM(ForecastModel):
                     prediction_df.loc[
                         date_range[idx + 1],
                         indicator
-                        ] = features[
+                    ] = features[
                         indicator
                     ]
                 # Set `Open` price
@@ -1087,7 +1110,8 @@ class LSTMCloseFM(ForecastModel):
             callbacks=[
                 EarlyStopping(
                     patience=self.patience,
-                    restore_best_weights=True)
+                    restore_best_weights=True
+                )
             ],
             verbose=1,
         )
@@ -1116,7 +1140,8 @@ class LSTMCloseFM(ForecastModel):
                     history_df,
                     pd.DataFrame.from_records(
                         [prediction_df.loc[date]],
-                        index=[date]),
+                        index=[date]
+                    ),
                 ]
             )
 
@@ -1158,14 +1183,11 @@ class LSTMCloseFM(ForecastModel):
 
         # Other targets
         # open_price_prediction = self.last_close_price +
-        # close_price_cumulative['Open']
-        #
+        # + close_price_cumulative['Open']
         # high_price_prediction = self.last_close_price +
-        # close_price_cumulative['High']
-        #
+        # + close_price_cumulative['High']
         # low_price_prediction = self.last_close_price +
-        # close_price_cumulative['Low']
-        #
+        # + close_price_cumulative['Low']
 
         return close_price_prediction
 

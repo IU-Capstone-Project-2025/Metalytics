@@ -286,7 +286,7 @@ span {
 
 .news__info {
 	width: 94%;
-	height: 46vh;
+	height: 70%;
 	text-align: center;
 	font-size: 24px;
 	line-height: 120%;
@@ -309,6 +309,10 @@ span {
 	color: var(--white);
 	bottom: 66px;
 	right: -21px;
+}
+
+.swiper-slide>div {
+	height: inherit;
 }
 
 /* Graph */

@@ -84,7 +84,6 @@
     }
     
     .news__info {
-        height: 41vh;
         font-size: 20px;
     }
 }
@@ -98,11 +97,6 @@
     .graph__block {
         height: auto;
     }
-
-    .news__info {
-        height: 32vh;
-        font-size: 20px;
-    }
 }
 
 @media (max-width: 975px) {
@@ -111,7 +105,6 @@
     }
 
     .news__info {
-        height: 600px;
         font-size: 16px;
     }
 

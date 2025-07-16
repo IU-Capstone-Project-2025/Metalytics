@@ -77,24 +77,24 @@ def save_to_json(data, filename='metalinfo_news.json'):
     except Exception as e:
         print(f"Ошибка при сохранении в JSON: {e}")
 
+def parse_metallurgy_news():
+    # URL для парсинга
+    url = "https://www.metalinfo.ru/en/news/list.html?pn="
 
-# URL для парсинга
-url = "https://www.metalinfo.ru/en/news/list.html?pn="
+    to_json = []
 
-to_json = []
+    metal_list = ['gold', 'silver', 'zinc']
 
-metal_list = ['gold', 'silver', 'zinc']
+    for page_number in range(1, 13):
+        page_url = url + str(page_number)
+        print(f"page_number:{page_number}")
 
-for page_number in range(1, 13):
-    page_url = url + str(page_number)
-    print(f"page_number:{page_number}")
+        time.sleep(5)
+        gold_news = parse_metalinfo_news(page_url, metal_list)
+        to_json += gold_news
 
-    time.sleep(5)
-    gold_news = parse_metalinfo_news(page_url, metal_list)
-    to_json += gold_news
+    # Выводим результаты в консоль
+    print(f"Найдено {len(to_json)} новостей о золоте:")
 
-# Выводим результаты в консоль
-print(f"Найдено {len(to_json)} новостей о золоте:")
-
-# Сохраняем данные в JSON-файл
-save_to_json(to_json)
+    # Сохраняем данные в JSON-файл
+    save_to_json(to_json)

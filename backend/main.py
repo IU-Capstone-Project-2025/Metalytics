@@ -337,6 +337,7 @@ async def metal_forcast_value_of_units(metal_id: str, unit="h", value=24):
         #     price = float(forecast[column_name])
         #     formatted_data.append({"timestamp": timestamp, "price": price})
         json_data = get_prices_from_db(metal_id=1, db_params=db_params, limit=value)
+        print(json_data)
         
         return json_data
 

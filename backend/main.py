@@ -34,6 +34,7 @@ db_params = {
     'port': os.getenv('DB_PORT')
 }
 
+
 def get_system_metrics() -> Dict[str, Any]:
     """Optional function to gather system metrics"""
     try:
@@ -76,7 +77,7 @@ async def metals_news(metal_id: str):
     try:
         metal_id = metal_id.lower()
         file_path = "metalinfo_news.json"
-        
+
         if metal_id not in Metal_dict.keys():
             raise HTTPException(
                 status_code=404, detail="No matches for this metal"
@@ -252,7 +253,11 @@ async def metal_forecast(metal_id: str):
         # unit = "h"  # units of time
         value = 24  # value of units
 
-        json_data = get_prices_from_db(metal_id=1, db_params=db_params, limit=value)
+        json_data = get_prices_from_db(
+            metal_id=1,
+            db_params=db_params,
+            limit=value
+        )
 
         # # Obtain pandas series with forecasted data
         # forecast = fm.create_forecast(value=value, unit=unit)
@@ -338,9 +343,12 @@ async def metal_forcast_value_of_units(metal_id: str, unit="h", value=24):
         #         timestamp = column_name.strftime("%Y-%m-%dT%H:%M:%SZ")
         #     price = float(forecast[column_name])
         #     formatted_data.append({"timestamp": timestamp, "price": price})
-        json_data = get_prices_from_db(metal_id=1, db_params=db_params, limit=value)
-        print(json_data)
-        
+        json_data = get_prices_from_db(
+            metal_id=1,
+            db_params=db_params,
+            limit=value
+        )
+
         return json_data
 
     except Exception as e:

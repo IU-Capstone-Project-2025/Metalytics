@@ -100,7 +100,8 @@ def insert_forecast_to_db():
                                           )
 
     # Create forecast
-    unit = 'h'  # units of time (e.g. 'h' for hour, 'd' for days, 'm' for months)
+    unit = 'h'  # units of time (e.g. 'h' for hour,
+    # 'd' for days, 'm' for months)
     value = 24   # value of units
 
     # Obtain pandas series with forecasted data

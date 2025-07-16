@@ -77,6 +77,7 @@ def save_to_json(data, filename='metalinfo_news.json'):
     except Exception as e:
         print(f"Ошибка при сохранении в JSON: {e}")
 
+
 def parse_metallurgy_news():
     # URL для парсинга
     url = "https://www.metalinfo.ru/en/news/list.html?pn="

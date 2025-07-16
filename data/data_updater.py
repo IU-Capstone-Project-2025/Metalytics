@@ -13,6 +13,6 @@ while True:
     if hour_counter == 0:
         parse_metallurgy_news()
         update_model()
-    hour_counter=(hour_counter + 1) % 24
+    hour_counter = (hour_counter + 1) % 24
     insert_forecast_to_db()
     time.sleep(3600)

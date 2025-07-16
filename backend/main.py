@@ -75,11 +75,7 @@ async def metals_news(metal_id: str):
     """
     try:
         metal_id = metal_id.lower()
-        file_path = "/metalinfo_news.json"
-        
-        # Debugging - check if file exists
-        if not os.path.exists(file_path):
-            return {"error": f"File not found at {os.path.abspath(file_path)}"}
+        file_path = "metalinfo_news.json"
         
         if metal_id not in Metal_dict.keys():
             raise HTTPException(

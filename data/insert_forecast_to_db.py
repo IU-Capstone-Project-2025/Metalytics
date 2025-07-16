@@ -2,7 +2,8 @@ import pandas as pd
 import psycopg2
 from psycopg2 import sql
 from forecasting_framework import ForecastFramework
-from forecasting_models import ClosePriceFM
+from forecasting_models import ClosePriceFM, ClosePriceFM_Silver
+from data_loader import GoldDataLoader, SilverDataLoader
 import numpy as np
 import os
 from dotenv import load_dotenv
@@ -91,13 +92,33 @@ Valid IDs are 1 (gold), 2 (silver), 3 (platinum)")
             conn.close()
 
 
-def insert_forecast_to_db():
+metal_params = {
+    "gold": {
+        "id": 1,
+        "path": "xgb_model",
+        "data_loader": GoldDataLoader(),
+        "target_columns": ['Close'],
+        "forecast_model": ClosePriceFM()
+    },
+    "silver": {
+        "id": 2,
+        "path": "silver_xgb_model",
+        "data_loader": SilverDataLoader(),
+        "target_columns": ['Close'],
+        "forecast_model": ClosePriceFM_Silver()
+    },
+}
+
+
+def insert_forecast_to_db(metal_id: str):
     # Load existing model
-    path: str = "xgb_model"
-    fm = ForecastFramework.load_from_file(path=path,
-                                          target_columns=['Close'],
-                                          forecast_model=ClosePriceFM()
-                                          )
+    params = metal_params[metal_id.lower()]
+    fm = ForecastFramework.load_from_file(
+        path=params['path'],
+        data_loader = params['data_loader'],
+        target_columns=params['target_columns'],
+        forecast_model=params['forecast_model']
+    )
 
     # Create forecast
     unit = 'h'  # units of time (e.g. 'h' for hour,
@@ -117,8 +138,5 @@ def insert_forecast_to_db():
         'port': os.getenv('DB_PORT')
     }
 
-    # ID металла (из вашей таблицы metals: 1-Gold, 2-Silver, 3-Platinum)
-    metal_id = 1  # Предполагаем, что это прогноз для Gold
-
     # Вызываем функцию для обновления данных
-    update_predicted_prices(forecast, metal_id, db_params)
+    update_predicted_prices(forecast, params["id"], db_params)

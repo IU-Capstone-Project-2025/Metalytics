@@ -4,5 +4,6 @@ python-dotenv
 yfinance
 psutil
 uvicorn
+pytest
 
 flake8

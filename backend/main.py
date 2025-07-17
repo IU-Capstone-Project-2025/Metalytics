@@ -48,10 +48,15 @@ def get_system_metrics() -> Dict[str, Any]:
 
 
 # Dictionary for metals from name to tags
-Metal_dict = {
+metal_tickens = {
     "gold": "GC=F",
     "silver": "SI=F",
     "zinc": "ZINC-USD"
+}
+metal_dict = {
+    "gold": 1,
+    "silver": 2,
+    "zinc": 3
 }
 
 
@@ -65,7 +70,7 @@ async def metals_check():
     """
     Get a list of available metals (["gold"])
     """
-    return {"available_metals": [key for key in Metal_dict.keys()]}
+    return {"available_metals": [key for key in metal_tickens.keys()]}
 
 
 @app.get("/news/{metal_id}")
@@ -78,7 +83,7 @@ async def metals_news(metal_id: str):
         metal_id = metal_id.lower()
         file_path = "metalinfo_news.json"
 
-        if metal_id not in Metal_dict.keys():
+        if metal_id not in metal_tickens.keys():
             raise HTTPException(
                 status_code=404, detail="No matches for this metal"
             )
@@ -109,7 +114,7 @@ async def metal_historical_data(metal_id: str, period: str, interval="1d"):
         metal_id = metal_id.lower()
 
         # Check input parameters
-        if metal_id not in Metal_dict.keys():
+        if metal_id not in metal_tickens.keys():
             raise HTTPException(
                 status_code=404, detail="No matches for this metal"
             )
@@ -156,7 +161,7 @@ async def metal_historical_data(metal_id: str, period: str, interval="1d"):
             period = "1d"
 
         # Fetch metal data
-        ticker_symbol = Metal_dict[metal_id]
+        ticker_symbol = metal_tickens[metal_id]
         metal = yf.Ticker(ticker_symbol)
 
         # Get historical data
@@ -229,7 +234,7 @@ async def metal_forecast(metal_id: str):
         metal_id = metal_id.lower()
 
         # Check input parameters
-        if metal_id not in Metal_dict.keys():
+        if metal_id not in metal_tickens.keys():
             raise HTTPException(
                 status_code=404,
                 detail="No data found for the given parameters",
@@ -254,7 +259,7 @@ async def metal_forecast(metal_id: str):
         value = 24  # value of units
 
         json_data = get_prices_from_db(
-            metal_id=1,
+            metal_id=metal_dict[metal_id],
             db_params=db_params,
             limit=value
         )
@@ -300,7 +305,7 @@ async def metal_forcast_value_of_units(metal_id: str, unit="h", value=24):
         metal_id = metal_id.lower()
 
         # Check input parameters
-        if metal_id not in Metal_dict.keys():
+        if metal_id not in metal_tickens.keys():
             raise HTTPException(
                 status_code=404,
                 detail="No data found for the given parameters",
@@ -344,7 +349,7 @@ async def metal_forcast_value_of_units(metal_id: str, unit="h", value=24):
         #     price = float(forecast[column_name])
         #     formatted_data.append({"timestamp": timestamp, "price": price})
         json_data = get_prices_from_db(
-            metal_id=1,
+            metal_id=metal_dict[metal_id],
             db_params=db_params,
             limit=value
         )

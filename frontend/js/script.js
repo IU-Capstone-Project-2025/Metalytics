@@ -315,7 +315,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Initialize prediction button availability for gold (default metal)
   setPredictedButtonAvailability(true);
 
   document.querySelectorAll('[data-metal]').forEach(button => {

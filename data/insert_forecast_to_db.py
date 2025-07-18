@@ -1,5 +1,7 @@
 import pandas as pd
 import psycopg2
+import time
+from psycopg2 import OperationalError
 from psycopg2 import sql
 from forecasting_framework import ForecastFramework
 from forecasting_models import ClosePriceFM, ClosePriceFM_Silver
@@ -23,11 +25,21 @@ def update_predicted_prices(data, metal_id, db_params):
     """
     conn = None
     cursor = None
+    max_retries = 5
+    retry_delay = 1  # seconds
+    
+    for attempt in range(max_retries):
+        try:
+            conn = psycopg2.connect(**db_params)
+            cursor = conn.cursor()
+            break  # Connection successful, exit retry loop
+        except OperationalError as e:
+            if attempt == max_retries - 1:
+                raise  # Re-raise after final attempt
+            print(f"Connection failed (attempt {attempt + 1}/{max_retries}), retrying...")
+            time.sleep(retry_delay)
+    
     try:
-        # Подключаемся к БД
-        conn = psycopg2.connect(**db_params)
-        cursor = conn.cursor()
-
         # 1. Validation to ensure the metal_id exists:
         cursor.execute("SELECT id FROM metals WHERE id = %s", (metal_id,))
         if not cursor.fetchone():
@@ -80,6 +92,7 @@ Valid IDs are 1 (gold), 2 (silver), 3 (platinum)")
         conn.commit()
         print("The update was completed successfully.")
 
+
     except Exception as e:
         print(f"Error updating data: {e}")
         if conn:
@@ -114,10 +127,10 @@ def insert_forecast_to_db(metal_id: str):
     # Load existing model
     params = metal_params[metal_id.lower()]
     fm = ForecastFramework.load_from_file(
-        path=params['path'],
+        path = params['path'],
         data_loader = params['data_loader'],
-        target_columns=params['target_columns'],
-        forecast_model=params['forecast_model']
+        target_columns = params['target_columns'],
+        forecast_model = params['forecast_model']
     )
 
     # Create forecast

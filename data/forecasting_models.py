@@ -11,6 +11,9 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import TimeSeriesSplit
 from statsmodels.tsa.arima.model import ARIMA, ARIMAResults
 from xgboost import XGBRegressor
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.layers import LSTM, Dense, Dropout, Input

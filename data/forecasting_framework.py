@@ -105,7 +105,7 @@ class ForecastFramework:
 
     def load_from_file(
         path: str,
-        data_loader: GoldDataLoader = GoldDataLoader(),
+        data_loader,
         target_columns=['Close'],
         forecast_model: ForecastModel = ClosePriceFM(),
         name="baseline_model",

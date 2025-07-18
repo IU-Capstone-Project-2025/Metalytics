@@ -61,6 +61,7 @@ Follow the steps below to run the project locally using Docker or manually.
 ### ⚙️ Prerequisites
 
 - [Docker](https://www.docker.com/products/docker-desktop) installed and running
+- [PostgreSQL](https://www.postgresql.org/) installed.
 - Python 3.10+
 - (Optional) Live server if running without Docker
 
@@ -71,6 +72,8 @@ In your terminal:
 ```bash
 git clone https://github.com/IU-Capstone-Project-2025/Metalytics.git
 cd Metalytics
+echo "DB_USER=postgres" > .env
+echo "DB_PASSWORD=postgres" >> .env
 ```
 
 ### 💻 Step 2 — Run with Docker (Recommended)

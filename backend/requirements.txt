@@ -5,5 +5,9 @@ yfinance
 psutil
 uvicorn
 pytest
+<<<<<<< HEAD
 
 flake8
+=======
+flake8
+>>>>>>> 9a2dbfbbb34317fa1f067fa6fab665ba7e9156a2

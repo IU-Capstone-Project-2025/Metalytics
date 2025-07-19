@@ -63,10 +63,11 @@ class GoldDataLoader:
 
     def _needs_update(self):
         """Checks whether the data needs to be updated (if >1 day has passed since the last update)"""
-        if not os.path.exists(self.processed_data_path):
-            return True
-        last_modified = datetime.fromtimestamp(os.path.getmtime(self.processed_data_path))
-        return (datetime.now() - last_modified) > timedelta(days=1)
+        # if not os.path.exists(self.processed_data_path):
+        #     return True
+        # last_modified = datetime.fromtimestamp(os.path.getmtime(self.processed_data_path))
+        # return (datetime.now() - last_modified) > timedelta(days=1)
+        return True
 
     def load_data(self):
         """Main method: returns up-to-date data"""

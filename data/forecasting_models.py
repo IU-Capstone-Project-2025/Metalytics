@@ -11,9 +11,6 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import TimeSeriesSplit
 from statsmodels.tsa.arima.model import ARIMA, ARIMAResults
 from xgboost import XGBRegressor
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
@@ -1014,26 +1011,20 @@ class ClosePriceFM_Silver(ForecastModel):
         self.feature_models = feature_models
 
     def build(self, df: pd.DataFrame):
+
         df = df.copy()
 
         # First difference to remove trend
         self.last_close_price = df['Close'].iloc[-1]
         df.loc[:, 'Close'] = df['Close'].diff()
         
-        # Ensure SP500 column exists and is properly processed
-        if 'SP500' not in df.columns:
-            df['SP500'] = np.nan
-        df['SP500'] = pd.to_numeric(df['SP500'], errors='coerce').interpolate(method='time')
+        if 'SP500' in df.columns:
+            df['SP500'] = pd.to_numeric(df['SP500'], errors='coerce').interpolate(method='time')
             
         df = df.dropna()
-        
-        # Add logging to verify features
-        print(f"Build features: {df.columns.tolist()}")
-        print(f"Build shape: {df.shape}")
-        
+
         return df
-    
-    
+
     def build_forecast_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Builds forecasting dataset (indexed with forecasting date range) from the dataframe.
@@ -1157,32 +1148,17 @@ class ClosePriceFM_Silver(ForecastModel):
         return self
 
     def predict(self, date_range: pd.DatetimeIndex, initial_price: float = None) -> pd.Series:
+
         prediction_df = self.build_forecast_data(pd.DataFrame(index=date_range))
-        
-        # Ensure all expected columns are present
-        expected_columns = self.df_.columns.tolist()
-        missing_cols = set(expected_columns) - set(prediction_df.columns)
-        for col in missing_cols:
-            prediction_df[col] = np.nan
-        prediction_df = prediction_df[expected_columns]  # Ensure correct column order
-        
+
         history_df = self.df_.copy()
 
         for idx, date in enumerate(date_range):
-            feature_columns = [col for col in prediction_df.columns if col != 'Close']
+
+            feature_columns = [column for column in prediction_df.columns if column != 'Close']
             features = prediction_df.loc[date, feature_columns].copy()
-            
-            # Verify feature dimensions
-            print(f"Features shape before compose: {features.shape}")
+
             x_ = compose_forecast_frame(history_df.to_numpy(), features.to_numpy(), self.lag)
-            print(f"X shape: {x_.shape}, expected: {self.model_.n_features_in_}")
-            
-            if x_.shape[1] != self.model_.n_features_in_:
-                raise ValueError(
-                    f"Feature mismatch in prediction: expected {self.model_.n_features_in_} features, "
-                    f"got {x_.shape[1]}. Check feature engineering steps."
-                )
-                
             y_ = self.model_.predict(x_)
 
             history_close_price = pd.concat([history_df['Close'], pd.Series(y_, index=[date])])

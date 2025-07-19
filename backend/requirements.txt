@@ -5,5 +5,5 @@ yfinance
 psutil
 uvicorn
 pytest
-
+httpx
 flake8

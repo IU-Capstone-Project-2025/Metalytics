@@ -1,12 +1,7 @@
 from forecasting_framework import ForecastFramework
-from forecasting_models import ClosePriceFM, ClosePriceFM_Silver 
+from forecasting_models import ClosePriceFM, ClosePriceFM_Silver
 from data_loader import GoldDataLoader, SilverDataLoader
 
-
-# model_list = [
-#     'xgb_model',
-#     'silver_xgb_model'
-# ]
 
 model_params = [
     {
@@ -23,11 +18,12 @@ model_params = [
     }
 ]
 
+
 def update_model():
     for params in model_params:
         # Create a new framework object
         fm = ForecastFramework(
-            data_loader= params['data_loader'],
+            data_loader=params['data_loader'],
             target_columns=params['target_columns'],
             forecast_model=params['forecast_model'],
             name=params['name']
@@ -42,6 +38,7 @@ def update_model():
         # Dump model
         fm.dump_model(path=params['name'])
         print(f"✅ Model '{params['name']}' saved to: {params['name']}/")
+
 
 if __name__ == "__main__":
     update_model()

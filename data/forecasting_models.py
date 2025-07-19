@@ -17,6 +17,7 @@ from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.saving import load_model
 import json
+import os
 
 
 class ForecastModel(ABC):
@@ -624,8 +625,11 @@ class ClosePriceFM(ForecastModel):
         self.df_ = self.build(df)
 
         # Fit feature models
-        for feature_model in self.feature_models.values():
+        print("Fitting feature models...")
+        for key, feature_model in self.feature_models.items():
+            print(f"  -> Fitting model for {key}")
             feature_model.fit(df)
+        print("Feature models fitted.")
 
         train_size = int(len(self.df_) * self.train_size)
         train_set, test_set = self.df_.iloc[:train_size], self.df_.iloc[train_size:]
@@ -648,7 +652,10 @@ class ClosePriceFM(ForecastModel):
             random_state=42,
         )
 
+        print("Fitting Close model...")
         self.model_.fit(X_train, y_train, eval_set=[(X_train, y_train), (X_test, y_test)], verbose=False)
+        print("Close model fitted.")
+
 
         return self
 
@@ -699,9 +706,19 @@ class ClosePriceFM(ForecastModel):
         return price_prediction
 
     def dump(self, path: str) -> None:
-        joblib.dump(self.model_, f"{path}/Close_predictor.joblib")
-        for model in self.feature_models.values():
-            model.dump(path)
+        os.makedirs(path, exist_ok=True)
+        
+        if hasattr(self, "model_") and self.model_ is not None:
+            joblib.dump(self.model_, f"{path}/Close_predictor.joblib")
+            print(f"Saved Close model to {path}/Close_predictor.joblib")
+        else:
+            print("Warning: Close model not found, skipping save.")
+
+        for key, model in self.feature_models.items():
+            if model is not None:
+                model.dump(path)
+            else:
+                print(f"Warning: Feature model {key} is None")
 
     def load(self, df: pd.DataFrame, path: str):
         self.df_ = self.build(df.copy())

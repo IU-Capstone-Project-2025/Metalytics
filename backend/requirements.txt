@@ -5,6 +5,7 @@ yfinance
 psutil
 uvicorn
 pytest
+httpx
 flake8
 tensorflow
 beautifulsoup4==4.12.3

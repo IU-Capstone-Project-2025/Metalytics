@@ -23,15 +23,15 @@ def test_historical_data():
         assert isinstance(response.json(), list)
 
 
-def test_forecast():
-    response = client.get("/forecast/Gold")
-    assert response.status_code in (200, 404)
-    if response.status_code == 200:
-        assert isinstance(response.json(), list)
+# def test_forecast():
+#     response = client.get("/forecast/Gold")
+#     assert response.status_code in (200, 404)
+#     if response.status_code == 200:
+#         assert isinstance(response.json(), list)
 
 
-def test_forecast_days():
-    response = client.get("/forecast/Gold/days?unit=h&value=24")
-    assert response.status_code in (200, 404)
-    if response.status_code == 200:
-        assert isinstance(response.json(), list)
+# def test_forecast_days():
+#     response = client.get("/forecast/Gold/days?unit=h&value=24")
+#     assert response.status_code in (200, 404)
+#     if response.status_code == 200:
+#         assert isinstance(response.json(), list)

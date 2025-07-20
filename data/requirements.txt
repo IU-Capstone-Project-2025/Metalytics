@@ -8,5 +8,7 @@ matplotlib
 psycopg2-binary
 python-dotenv
 tensorflow
-
 flake8
+numpy
+joblib
+arch

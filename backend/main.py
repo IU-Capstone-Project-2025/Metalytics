@@ -51,7 +51,7 @@ def get_system_metrics() -> Dict[str, Any]:
 metal_tickens = {
     "gold": "GC=F",
     "silver": "SI=F",
-    "zinc": "ZINC-USD"
+    "zinc": "ZINC.L"
 }
 metal_dict = {
     "gold": 1,

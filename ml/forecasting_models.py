@@ -11,13 +11,14 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import TimeSeriesSplit
 from statsmodels.tsa.arima.model import ARIMA, ARIMAResults
 from xgboost import XGBRegressor
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
-from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.saving import load_model
-import json
 
+import json
+import os
+from pathlib import Path
+import warnings
+import pickle
+from arch import arch_model
+from tensorflow import keras
 
 class ForecastModel(ABC):
     """
@@ -1237,3 +1238,316 @@ class ClosePriceFM_Silver(ForecastModel):
         self.model_ = joblib.load(f"{path}/Close_predictor.joblib")
         for model in self.feature_models.values():
             model.load(df, path)
+
+
+class ZincForecastModel(ForecastModel):
+    """
+    Конкретная реализация для прогноза цены цинка.
+    Совмещает GARCH(1,1) + MinMax‑масштабы + 2‑слойный LSTM.
+    """
+
+    # ---------- инициализация ------------------------------------------------
+    def __init__(self, window_size: int = 48, split_date: str | pd.Timestamp = "2024-07-01"):
+        self.window_size = window_size
+        self.split_date = pd.to_datetime(split_date)
+        # будет заполнено в build / fit
+        self.data_df: pd.DataFrame | None = None
+        self.train_df: pd.DataFrame | None = None
+        self.test_df: pd.DataFrame | None = None
+
+        self.feature_cols: List[str] = [
+            "Open",
+            "High",
+            "Low",
+            "Close",
+            "Volume",
+            "Zn_Price",
+            "DXY",
+            "Brent_USD",
+            "Zinc_Production",
+            "LogReturn",
+            "GARCH_vol",
+        ]
+        self.scalers: Dict[str, MinMaxScaler] = {c: MinMaxScaler() for c in self.feature_cols}
+        self.garch_res = None  # type: ignore
+        self.lstm: keras.Model | None = None
+
+    # ---------- приватные хелперы ------------------------------------------
+    def _scale_scalar(self, col: str, value: float) -> float:
+        """Безопасно масштабирует скаляр (предотвращает предупреждения sklearn)."""
+        arr = self.scalers[col].transform(pd.DataFrame([[value]], columns=[col]))
+        return float(arr[0, 0])
+
+    def _make_sequences(self, df_scaled: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
+        """Формирует (X, y) для LSTM из уже масштабированного df."""
+        arr = df_scaled[self.feature_cols].values
+        X, y = [], []
+        for i in range(self.window_size, len(arr)):
+            X.append(arr[i - self.window_size : i])
+            y.append(arr[i, self.feature_cols.index("Close")])
+        return np.asarray(X, np.float32), np.asarray(y, np.float32)
+
+    # ---------- build -------------------------------------------------------
+    def build(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        *Добавляет* LogReturn и GARCH‑волатильность,
+        делит на train/test, масштабирует все признаки.
+        Возвращает (train_scaled, test_scaled).
+        """
+        # 1) Копируем, чтобы не портить оригинал
+        df = df.copy()
+        df["LogReturn"] = np.log(df["Close"] / df["Close"].shift(1))
+        df["LogReturn"].fillna(0.0, inplace=True)
+
+        # 2) Fit/forecast GARCH (только один раз на train)
+        train_mask = df["DateTime"] < self.split_date
+        returns_train = df.loc[train_mask, "LogReturn"].values
+        self.garch_res = arch_model(
+            returns_train, p=1, q=1, mean="Zero", vol="GARCH", dist="normal"
+        ).fit(disp="off")
+
+        sigma_train = self.garch_res.conditional_volatility
+        sigma_test = np.sqrt(
+            self.garch_res.forecast(horizon=(~train_mask).sum(), reindex=False)
+            .variance.values[-1]
+        )
+        df["GARCH_vol"] = np.concatenate([sigma_train, sigma_test])
+
+        # 3) Разделяем на train/test
+        self.data_df = df
+        self.train_df = df.loc[train_mask].copy()
+        self.test_df = df.loc[~train_mask].copy()
+
+        # 4) Масштабирование
+        train_scaled = self.train_df.copy()
+        test_scaled = self.test_df.copy()
+        for col in self.feature_cols:
+            train_scaled[col] = self.scalers[col].fit_transform(self.train_df[[col]])
+            test_vals = self.scalers[col].transform(self.test_df[[col]])
+            test_scaled[col] = np.clip(test_vals, 0.0, 1.0)
+        return train_scaled, test_scaled
+
+    # ---------- build_forecast_data ----------------------------------------
+    def build_forecast_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Быстро готовит новый df для roll‑out‑прогноза,
+        используя уже обученные скейлеры и GARCH‑модель.
+        """
+        if self.garch_res is None:
+            raise RuntimeError("Модель ещё не обучена: сначала вызовите .fit() или .load()")
+
+        df = df.copy()
+        df["LogReturn"] = np.log(df["Close"] / df["Close"].shift(1))
+        df["LogReturn"].fillna(0.0, inplace=True)
+
+        # Прогнозируем σ на всю длину df
+        horizon = len(df)
+        sigma = np.sqrt(
+            self.garch_res.forecast(horizon=horizon, reindex=False).variance.values[-1]
+        )
+        df["GARCH_vol"] = sigma
+
+        # Масштабируем
+        for col in self.feature_cols:
+            df[col] = self.scalers[col].transform(df[[col]])
+        return df
+
+    # ---------- fit ---------------------------------------------------------
+    def fit(self, df: pd.DataFrame, params: Dict[str, Any]):
+        """
+        Полный цикл обучения: build → LSTM fit.
+        `params` может содержать:
+            - lstm_units: int | tuple[int,int]
+            - dropout: float
+            - epochs: int
+            - batch_size: int
+            - patience: int (EarlyStopping)
+        """
+        train_scaled, _ = self.build(df)  # готовим данные
+
+        # Извлекаем гиперпараметры с дефолтами
+        units = params.get("lstm_units", (50, 50))
+        if isinstance(units, int):
+            units = (units, units)
+        dropout = params.get("dropout", 0.2)
+        epochs = params.get("epochs", 50)
+        batch_size = params.get("batch_size", 64)
+        patience = params.get("patience", 5)
+
+        # Подготовка X, y
+        X_train, y_train = self._make_sequences(train_scaled)
+
+        # Построение модели
+        self.lstm = keras.Sequential(
+            [
+                keras.layers.Input(shape=(self.window_size, len(self.feature_cols))),
+                keras.layers.LSTM(units[0], return_sequences=True),
+                keras.layers.Dropout(dropout),
+                keras.layers.LSTM(units[1]),
+                keras.layers.Dropout(dropout),
+                keras.layers.Dense(1),
+            ]
+        )
+        self.lstm.compile(optimizer="adam", loss="mse")
+        es = keras.callbacks.EarlyStopping(monitor="val_loss", patience=patience, restore_best_weights=True)
+        self.lstm.fit(
+            X_train,
+            y_train,
+            epochs=epochs,
+            batch_size=batch_size,
+            validation_split=0.1,
+            callbacks=[es],
+            shuffle=True,
+            verbose=2,
+        )
+        return self
+
+    # ---------- cross_validation -------------------------------------------
+    def cross_validation(
+        self,
+        df: pd.DataFrame,
+        params: Dict[str, Any],
+        K: int = 20,
+        test_size: int = 24 * 10 * 1,
+        metric: Callable = mean_squared_error,
+    ) -> float:
+        """
+        Скользящая валидация: каждые `test_size` часов берём новый fold.
+        GARCH обучается **один** раз (быстрее), LSTM переобучается на каждом фолде.
+        """
+        # фиксируем build + GARCH + скейлеры один раз
+        self.build(df)
+        scores: List[float] = []
+
+        total_len = len(self.train_df)  # type: ignore
+        step = test_size // 2  # половинный сдвиг
+
+        for start in range(0, total_len - test_size - self.window_size, step):
+            end_train = start + test_size
+            train_part = self.train_df.iloc[:end_train]  # type: ignore
+
+            # масштабируем part теми же скейлерами
+            train_scaled = train_part.copy()
+            for col in self.feature_cols:
+                train_scaled[col] = self.scalers[col].transform(train_part[[col]])
+
+            X_tr, y_tr = self._make_sequences(train_scaled)
+
+            # val set = следующие `test_size` часов
+            val_part = self.train_df.iloc[end_train - self.window_size : end_train + test_size]  # type: ignore
+            val_scaled = val_part.copy()
+            for col in self.feature_cols:
+                val_scaled[col] = self.scalers[col].transform(val_part[[col]])
+            X_val, y_val = self._make_sequences(val_scaled)
+
+            # новая LSTM (маленькая, чтобы было быстрее)
+            tmp_model = keras.Sequential(
+                [
+                    keras.layers.Input(shape=(self.window_size, len(self.feature_cols))),
+                    keras.layers.LSTM(30, return_sequences=True),
+                    keras.layers.LSTM(30),
+                    keras.layers.Dense(1),
+                ]
+            )
+            tmp_model.compile(optimizer="adam", loss="mse")
+            tmp_model.fit(
+                X_tr,
+                y_tr,
+                epochs=params.get("epochs", 15),
+                batch_size=params.get("batch_size", 64),
+                verbose=0,
+            )
+            y_pred = tmp_model.predict(X_val, verbose=0)
+            y_true = y_val
+
+            # обратное масштабирование Close
+            y_pred_un = self.scalers["Close"].inverse_transform(y_pred)
+            y_true_un = self.scalers["Close"].inverse_transform(y_true.reshape(-1, 1))
+            scores.append(metric(y_true_un, y_pred_un))
+
+        return float(np.mean(scores))
+
+    # ---------- predict -----------------------------------------------------
+    def predict(self, date_range: pd.DatetimeIndex) -> pd.Series:
+        if self.lstm is None or self.data_df is None:
+            raise RuntimeError("Модель не обучена или не загружена")
+
+        # 1) стартовое окно: последние window_size часов из history
+        hist = self.data_df[self.feature_cols].iloc[-self.window_size :].copy()
+        hist_scaled = hist.copy()
+        for col in self.feature_cols:
+            hist_scaled[col] = self.scalers[col].transform(hist[[col]])
+        seq = hist_scaled.values
+
+        last_close = hist["Close"].iloc[-1]
+        last_vol = hist["GARCH_vol"].iloc[-1]
+        last_macros = hist.iloc[-1][
+            ["Zn_Price", "DXY", "Brent_USD", "Zinc_Production", "Volume"]
+        ]
+
+        preds = []
+        for _ in date_range:
+            X_in = seq.reshape(1, self.window_size, len(self.feature_cols))
+            close_scaled = self.lstm.predict(X_in, verbose=0)[0, 0].item()
+            close_unscaled = self.scalers["Close"].inverse_transform([[close_scaled]])[0, 0]
+            preds.append(close_unscaled)
+
+            new_row = {
+                "Open": last_close,
+                "Close": close_unscaled,
+                "High": max(last_close, close_unscaled),
+                "Low": min(last_close, close_unscaled),
+                "Volume": float(last_macros["Volume"]),
+                "Zn_Price": float(last_macros["Zn_Price"]),
+                "DXY": float(last_macros["DXY"]),
+                "Brent_USD": float(last_macros["Brent_USD"]),
+                "Zinc_Production": float(last_macros["Zinc_Production"]),
+                "LogReturn": np.log(close_unscaled / last_close) if last_close != 0 else 0.0,
+                "GARCH_vol": float(last_vol),
+            }
+            new_row_scaled = [self._scale_scalar(c, new_row[c]) for c in self.feature_cols]
+            seq = np.vstack([seq[1:], new_row_scaled])
+            last_close = close_unscaled  # shift
+
+        return pd.Series(preds, index=date_range, name="Pred_Close")
+
+    # ---------- dump / load --------------------------------------------------
+    def dump(self, path: str) -> None:
+        os.makedirs(path, exist_ok=True)
+        # LSTM
+        if self.lstm is None:
+            raise RuntimeError("Нет модели для сохранения")
+        self.lstm.save(os.path.join(path, "lstm_zinc.keras"), include_optimizer=True, save_format="keras")
+        # GARCH + scalers
+        with open(os.path.join(path, "garch_and_scalers.pkl"), "wb") as f:
+            pickle.dump(
+                {
+                    "garch_result": self.garch_res,
+                    "split_date": self.split_date,
+                    "feature_cols": self.feature_cols,
+                    "scalers": self.scalers,
+                    "window_size": self.window_size,
+                },
+                f,
+                protocol=pickle.HIGHEST_PROTOCOL,
+            )
+        # мета‑json
+        with open(os.path.join(path, "meta.json"), "w", encoding="utf-8") as f:
+            json.dump(
+                {"window_size": self.window_size, "split_date": str(self.split_date)}, f, indent=2
+            )
+
+    def load(self, df: pd.DataFrame, path: str) -> None:
+        # восстанавливаем скейлеры + GARCH
+        with open(os.path.join(path, "garch_and_scalers.pkl"), "rb") as f:
+            saved = pickle.load(f)
+        self.garch_res = saved["garch_result"]
+        self.scalers = saved["scalers"]
+        self.feature_cols = saved["feature_cols"]
+        self.window_size = saved["window_size"]
+        self.split_date = saved["split_date"]
+
+        # LSTM
+        self.lstm = keras.models.load_model(os.path.join(path, "lstm_zinc.keras"))
+        # rebuild dataframes so that .predict() работает
+        self.build(df)  # пересчитаем LogReturn + GARCH_vol, но НЕ переобучаем

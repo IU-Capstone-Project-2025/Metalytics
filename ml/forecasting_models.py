@@ -1160,16 +1160,18 @@ class ClosePriceFM_Silver(ForecastModel):
         history_df = self.df_.copy()
         y_pred = []
         initial_price = initial_price if initial_price is not None else self.last_close_price
-        max_volatility = initial_price * 0.03  # 3% от начальной цены за 48 часов
-        max_step_change = initial_price * 0.001  # 0.1% за шаг (30 минут)
-        min_price = initial_price * 0.9  # Минимальная цена (90% от начальной)
+        max_volatility = initial_price * 0.02  # 3% от начальной цены за 48 часов
+        max_step_change = initial_price * 0.0003  # 0.1% за шаг 
+        min_price = initial_price * 0.93  # Минимальная цена 
         
         for idx, date in enumerate(date_range):
             feature_columns = [column for column in prediction_df.columns if column != 'Close']
             features = prediction_df.loc[date, feature_columns].copy()
             x_ = compose_forecast_frame(history_df.to_numpy(), features.to_numpy(), self.lag)
             y_ = self.model_.predict(x_)[0]
-            
+            if idx > 0:
+                alpha = 0.05  # Коэффициент сглаживания (0 < alpha < 1, меньшие значения - более плавное сглаживание)
+                y_ = alpha * y_ + (1 - alpha) * y_pred[-1]
             # Умеренные колебания
             atr = features['ATR14'] if 'ATR14' in features else 0.05
             noise = np.random.normal(0, atr * 0.02)  # Очень слабый шум
@@ -1220,7 +1222,9 @@ class ClosePriceFM_Silver(ForecastModel):
             history_df = history_df.loc[~history_df.index.duplicated(keep='last')]
         
         y_pred = pd.Series(y_pred, index=date_range)
-        price_prediction = initial_price + np.cumsum(y_pred)
+        smoothed_y_pred = y_pred.rolling(window=5, center=True, min_periods=1).mean()  # Скользящее среднее с окном 5
+        
+        price_prediction = initial_price + np.cumsum(smoothed_y_pred)
         return price_prediction
 
     def dump(self, path: str) -> None:

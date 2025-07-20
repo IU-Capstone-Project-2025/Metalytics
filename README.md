@@ -44,8 +44,10 @@ Additionally, the system will generate reports explaining price fluctuations and
 
 ```
 Metalytics/
+├── Assets/             # Figma design, tests, kanban
 ├── frontend/           # Client-side application
-├── backend/            # Server-side logic and API handling
+├── backend/            # Server-side logic and API handling, news parsing
+├── data/               # models, scripts
 ├── ml/                 # Machine learning models, training, and inference scripts
 ├── docker-compose.yml  # Orchestration file for running all services together
 ├── .gitignore          # Git exclusion rules
@@ -151,11 +153,12 @@ Open frontend/index.html directly in your browser or use a local server (ex. "Li
 ## 📈 Roadmap
 
 - [x] Project structure setup
-- [ ] Frontend and backend boilerplates
-- [ ] Data collection and preprocessing
-- [ ] ML baseline model
+- [x] Frontend and backend boilerplates
+- [x] Data collection and preprocessing
+- [x] ML baseline model
+- [x] UI integration
 - [ ] Explainability reports (news, sanctions, macro trends)
-- [ ] UI integration
+- [ ] Model improvements
 
 ## 📝 License
 

@@ -1160,9 +1160,9 @@ class ClosePriceFM_Silver(ForecastModel):
         history_df = self.df_.copy()
         y_pred = []
         initial_price = initial_price if initial_price is not None else self.last_close_price
-        max_volatility = initial_price * 0.03  # 3% от начальной цены за 48 часов
-        max_step_change = initial_price * 0.001  # 0.1% за шаг (30 минут)
-        min_price = initial_price * 0.9  # Минимальная цена (90% от начальной)
+        max_volatility = initial_price * 0.02  # 3% от начальной цены за 48 часов
+        max_step_change = initial_price * 0.0003  # 0.1% за шаг 
+        min_price = initial_price * 0.93  # Минимальная цена 
         
         for idx, date in enumerate(date_range):
             feature_columns = [column for column in prediction_df.columns if column != 'Close']

@@ -154,7 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const periodToForecast = {
-    hour:  { unit: "m", value: 60 },
+    hour:  { unit: "h", value: 10 },
     day:   { unit: "h", value: 24 },
     week:  { unit: "d", value: 7 },
     month: { unit: "d", value: 30 },

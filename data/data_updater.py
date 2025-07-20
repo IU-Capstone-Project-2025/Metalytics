@@ -3,6 +3,7 @@ from insert_forecast_to_db import insert_forecast_to_db
 from update_model import update_model
 from parse_metallurgy_news import parse_metallurgy_news
 from update_model_zinc import update_model_zinc
+from insert_forecast_zinc_to_db import insert_forecast_zinc_to_db
 import datetime as dt
 
 # Take today as yesterday to have
@@ -16,12 +17,14 @@ metal_list = [
 
 while True:
     if today != dt.date.today():
-        # parse_metallurgy_news()
-        # update_model()
+        parse_metallurgy_news()
+        update_model()
         update_model_zinc()
         today = dt.date.today()
 
     for metal_id in metal_list:
         insert_forecast_to_db(metal_id)
+    insert_forecast_zinc_to_db()
+
     
     time.sleep(3600)

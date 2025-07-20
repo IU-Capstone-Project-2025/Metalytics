@@ -322,19 +322,7 @@ document.addEventListener("DOMContentLoaded", () => {
     button.addEventListener('click', async () => {
       selectedMetal = button.dataset.metal;
       activeMetal();
-      if (selectedMetal === 'zinc') {
-        selectedDate = 'day';
-        setPredictedButtonAvailability(false);
-        document.querySelectorAll('.graph__button[data-interval]').forEach(btn => {
-          btn.classList.toggle('graph__button--active', btn.dataset.interval === 'day');
-        });
-        currentSelect = 'historical';
-        setSelectButtonActive(currentSelect);
-        activeSelect();
-        fetchData('day');
-      } 
-      
-      else if (selectedMetal === 'gold' || selectedMetal === 'silver') {
+      if (selectedMetal === 'gold' || selectedMetal === 'silver' || selectedMetal === 'zinc') {
         selectedDate = 'day';
         setPredictedButtonAvailability(true);
         document.querySelectorAll('.graph__button[data-interval]').forEach(btn => {

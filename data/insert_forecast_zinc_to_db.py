@@ -25,11 +25,17 @@ def insert_forecast_zinc_to_db():
             .sort_values("DateTime")
             .fillna(method="ffill"))
     
+    print("#"*50,"data_df","#"*50)
+    print(data_df)
+
     zm2 = ZincForecastModel()
     zm2.load(data_df, "./lstm_zinc")
     
     future_idx = pd.date_range(data_df['DateTime'].iloc[-1], periods=48, freq="h")
     pred_24h = zm2.predict(future_idx)
+
+    print("#"*50,"pred_24h","#"*50)
+    print(pred_24h)
 
     load_dotenv()
     # Параметры подключения к БД (замените на свои)

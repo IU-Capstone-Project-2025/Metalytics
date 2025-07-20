@@ -7,7 +7,7 @@ import pandas as pd
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(message)s")
 
-TICKER   = "ZNC=F"
+TICKER   = "ZINC.L"
 OUTFILE  = Path(__file__).parent / "zinc_ohlcv_safe.csv"
 
 def fetch_ohlc(tkr: str, interval: str) -> Optional[pd.DataFrame]:

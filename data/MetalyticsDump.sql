@@ -39,4 +39,4 @@ CREATE INDEX IF NOT EXISTS idx_predicted_prices_metal ON predicted_prices_II (me
 INSERT INTO metals (id, name) VALUES 
     (1, 'gold'),
     (2, 'silver'),
-    (3, 'platinum');
+    (3, 'zinc');

@@ -6,3 +6,4 @@ psutil
 uvicorn
 pytest
 flake8
+httpx

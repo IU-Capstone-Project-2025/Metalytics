@@ -27,7 +27,8 @@ class ForecastModel(ABC):
     @abstractmethod
     def fit(self, df: pd.DataFrame, params: Dict[str, Any]):
         """
-        Creates dataset from `df` and fits the model with parameters to the dataset.
+        Creates dataset from `df` and fits the model with parameters
+        to the dataset.
 
         Parameters:
             df (pd.DataFrame): dataframe from which dataset is built.
@@ -72,7 +73,8 @@ class ForecastModel(ABC):
                          test_size: int = 24*10*1,
                          metric: Callable = mean_squared_error) -> float:
         """
-        K-fold cross validation of a given test size to evaluate model performance.
+        K-fold cross validation of a given test size to evaluate model
+        performance.
 
         Parameters:
             df (pd.DataFrame): dataframe.
@@ -163,23 +165,31 @@ class SLFM(ForecastModel):
 
     def predict(self, date_range: pd.DatetimeIndex) -> pd.Series:
         assert self.model_fit is not None
-        y_pred = self.model_fit.predict(start=date_range[0], end=date_range[-1], dynamic=False)
+        y_pred = self.model_fit.predict(
+            start=date_range[0],
+            end=date_range[-1],
+            dynamic=False
+        )
         return y_pred
 
     def dump(self, path: str) -> None:
         self.model_fit.save(f"{path}/{self.feature_name}_predictor.joblib")
 
     def load(self, df: pd.DataFrame, path: str) -> None:
-        self.model_fit = ARIMAResults.load(f"{path}/{self.feature_name}_predictor.joblib")
+        self.model_fit = ARIMAResults.load(f"{path}/{self.feature_name}"
+                                           "_predictor.joblib")
 
 
-def decompose_tabular_data(data: np.array, h: int) -> Tuple[np.array, np.array]:
+def decompose_tabular_data(
+        data: np.array,
+        h: int) -> Tuple[np.array, np.array]:
     """
     Compose features from successive dataset objects using sliding window.
 
     For example, [y_1, y_2, y_3, y_4, ...] (h=2) would produce
 
-        ([ [*y_1, *y_2, y_3[:, 1:]], [*y_2, *y_3, y_4[:, 1:]], ...], [y_3, y_4, ...]).
+        ([ [*y_1, *y_2, y_3[:, 1:]], [*y_2, *y_3, y_4[:, 1:]], ...],
+        [y_3, y_4, ...]).
 
     Here *a means unpacking values from a vector.
 
@@ -191,18 +201,26 @@ def decompose_tabular_data(data: np.array, h: int) -> Tuple[np.array, np.array]:
         Tuple[np.array, np.array]: tuple of sampled dataset of h features
         and the target value for them.
     """
-    X = sliding_window_view(data, window_shape=(h, data.shape[1])).reshape(-1, h * data.shape[1])[:-1, :]
+    X = sliding_window_view(
+        data,
+        window_shape=(h, data.shape[1])
+    ).reshape(-1, h * data.shape[1])[:-1, :]
     y = data[h:]
     target, features = y[:, 0], y[:, 1:]
     X = np.hstack([X, features, np.ones(shape=(X.shape[0], 1))])
     return (X, target)
 
 
-def compose_forecast_frame(data: np.array, features: np.array, lag: int) -> Tuple[np.array, np.array]:
+def compose_forecast_frame(
+        data: np.array,
+        features: np.array,
+        lag: int) -> Tuple[np.array, np.array]:
     """
-    Compose features from the last observations and features of forecast timeframe.
+    Compose features from the last observations and features of
+    forecast timeframe.
 
-    For example, [..., y_{n-k}, ..., y_{n-3}, y_{n-2}, y_{n-1}, y_n] (lag=2) would produce
+    For example, [..., y_{n-k}, ..., y_{n-3}, y_{n-2}, y_{n-1}, y_n]
+    (lag=2) would produce
 
         [*y_{n-1}, *y_{n}, *features, 1].
 
@@ -229,9 +247,11 @@ class XGBoostFM(ForecastModel):
         model_ (XGBRegressor): regression model.
         df_ (pd.DataFrame): dataset built for training.
         target (str): target column.
-        stationary (bool): True if series is stationary (first difference is irrelevant).
+        stationary (bool): True if series is stationary
+        (first difference is irrelevant).
         lag (int): number of lagged features.
-        last_value_ (float): last observed value of the series (for differenced predictions).
+        last_value_ (float): last observed value of the series
+        (for differenced predictions).
     """
 
     model_: BaseEstimator
@@ -283,10 +303,18 @@ class XGBoostFM(ForecastModel):
 
         # Day of Week (0=Monday, 6=Sunday)
         df['day_of_week'] = df.index.dayofweek
-        df['day_of_week'] = pd.Categorical(df['day_of_week'], categories=range(7), ordered=True)
+        df['day_of_week'] = pd.Categorical(
+            df['day_of_week'],
+            categories=range(7),
+            ordered=True
+        )
 
         df['year'] = df.index.year
-        df['year'] = pd.Categorical(df['year'], categories=range(2023, 2026), ordered=True)
+        df['year'] = pd.Categorical(
+            df['year'],
+            categories=range(2023, 2026),
+            ordered=True
+        )
 
         # Month (1-12)
         month_index = df.index.month
@@ -297,7 +325,11 @@ class XGBoostFM(ForecastModel):
 
         # Season (1=Winter, 2=Spring, 3=Summer, 4=Fall)
         df['season'] = (df.index.month % 12 + 3) // 3
-        df['season'] = pd.Categorical(df['season'], categories=range(1, 5), ordered=True)
+        df['season'] = pd.Categorical(
+            df['season'],
+            categories=range(1, 5),
+            ordered=True
+        )
 
         # Weekend flag (1 if Saturday/Sunday, else 0)
         df['is_weekend'] = df.index.dayofweek.isin([5, 6]).astype(int)
@@ -310,17 +342,27 @@ class XGBoostFM(ForecastModel):
         df['hour_cos'] = np.cos(2 * np.pi * hour_index / 24)
 
         # For cyclical features (day_of_week, season)
-        df = pd.get_dummies(df, columns=['day_of_week', 'season'], prefix=['dow', 'season'])
+        df = pd.get_dummies(df, columns=[
+            'day_of_week',
+            'season'
+        ], prefix=['dow', 'season'])
 
         # Normalization
-        for feature in ['year', 'month_sin', 'month_cos', 'hour_sin', 'hour_cos']:
+        for feature in [
+            'year',
+            'month_sin',
+            'month_cos',
+            'hour_sin',
+            'hour_cos'
+        ]:
             df[feature] = MinMaxScaler().fit_transform(df[[feature]])
 
         return df.astype(np.float32)
 
     def build_forecast_data(self, df: pd.DataFrame):
         """
-        Builds forecasting dataset (indexed with forecasting date range) from the dataframe.
+        Builds forecasting dataset (indexed with forecasting date range)
+        from the dataframe.
 
         Parameters:
             df (pd.DataFrame): dataframe from which dataset is built.
@@ -335,10 +377,18 @@ class XGBoostFM(ForecastModel):
 
         # Day of Week (0=Monday, 6=Sunday)
         df['day_of_week'] = df.index.dayofweek
-        df['day_of_week'] = pd.Categorical(df['day_of_week'], categories=range(7), ordered=True)
+        df['day_of_week'] = pd.Categorical(
+            df['day_of_week'],
+            categories=range(7),
+            ordered=True
+        )
 
         df['year'] = df.index.year
-        df['year'] = pd.Categorical(df['year'], categories=range(2023, 2026), ordered=True)
+        df['year'] = pd.Categorical(
+            df['year'],
+            categories=range(2023, 2026),
+            ordered=True
+        )
 
         # Month (1-12)
         month_index = df.index.month
@@ -349,7 +399,11 @@ class XGBoostFM(ForecastModel):
 
         # Season (1=Winter, 2=Spring, 3=Summer, 4=Fall)
         df['season'] = (df.index.month % 12 + 3) // 3
-        df['season'] = pd.Categorical(df['season'], categories=range(1, 5), ordered=True)
+        df['season'] = pd.Categorical(
+            df['season'],
+            categories=range(1, 5),
+            ordered=True
+        )
 
         # Weekend flag (1 if Saturday/Sunday, else 0)
         df['is_weekend'] = df.index.dayofweek.isin([5, 6]).astype(int)
@@ -362,10 +416,20 @@ class XGBoostFM(ForecastModel):
         df['hour_cos'] = np.cos(2 * np.pi * hour_index / 24)
 
         # For cyclical features (day_of_week, season)
-        df = pd.get_dummies(df, columns=['day_of_week', 'season'], prefix=['dow', 'season'])
+        df = pd.get_dummies(
+            df,
+            columns=['day_of_week', 'season'],
+            prefix=['dow', 'season']
+        )
 
         # Normalization
-        for feature in ['year', 'month_sin', 'month_cos', 'hour_sin', 'hour_cos']:
+        for feature in [
+            'year',
+            'month_sin',
+            'month_cos',
+            'hour_sin',
+            'hour_cos'
+        ]:
             df[feature] = MinMaxScaler().fit_transform(df[[feature]])
 
         return df.astype(np.float32)
@@ -380,7 +444,10 @@ class XGBoostFM(ForecastModel):
 
         tss = TimeSeriesSplit(n_splits=K, test_size=test_size, gap=24)
 
-        X_train, y_train = decompose_tabular_data(history_df.to_numpy(), h=self.lag)
+        X_train, y_train = decompose_tabular_data(
+            history_df.to_numpy(),
+            h=self.lag
+        )
         Xy = pd.DataFrame(X_train, y_train)
 
         score = 0
@@ -407,7 +474,10 @@ class XGBoostFM(ForecastModel):
                 random_state=42
             )
 
-            regressor.fit(X_train, y_train, eval_set=[(X_train, y_train), (X_val, y_val)], verbose=False)
+            regressor.fit(X_train, y_train, eval_set=[
+                (X_train, y_train),
+                (X_val, y_val)
+            ], verbose=False)
 
             y_pred = regressor.predict(X_val)
 
@@ -431,10 +501,17 @@ class XGBoostFM(ForecastModel):
         self.df_ = self.build(df)
 
         train_size = int(len(self.df_) * 0.8)
-        train_set, test_set = self.df_.iloc[:train_size], self.df_.iloc[train_size:]
+        train_set, test_set = self.df_.iloc[:train_size], \
+            self.df_.iloc[train_size:]
 
-        X_train, y_train = decompose_tabular_data(train_set.to_numpy(), h=self.lag)
-        X_test, y_test = decompose_tabular_data(test_set.to_numpy(), h=self.lag)
+        X_train, y_train = decompose_tabular_data(
+            train_set.to_numpy(),
+            h=self.lag
+        )
+        X_test, y_test = decompose_tabular_data(
+            test_set.to_numpy(),
+            h=self.lag
+        )
 
         self.model_ = XGBRegressor(
             n_estimators=params['n_estimators'],
@@ -451,21 +528,35 @@ class XGBoostFM(ForecastModel):
             random_state=42
         )
 
-        self.model_.fit(X_train, y_train, eval_set=[(X_train, y_train), (X_test, y_test)], verbose=False)
+        self.model_.fit(X_train, y_train, eval_set=[
+            (X_train, y_train),
+            (X_test, y_test)
+        ], verbose=False)
 
         return self
 
     def predict(self, date_range: pd.DatetimeIndex) -> pd.Series:
 
-        prediction_df = self.build_forecast_data(pd.DataFrame(index=date_range, columns=[self.target]))
+        prediction_df = self.build_forecast_data(
+            pd.DataFrame(index=date_range, columns=[self.target])
+        )
 
         history_df = self.df_.copy()
 
         for date in date_range:
-            feature_columns = [column for column in prediction_df.columns if column != self.target]
+            feature_columns = [
+                column
+                for column
+                in prediction_df.columns
+                if column != self.target
+            ]
             features = prediction_df.loc[date, feature_columns].copy()
 
-            x_ = compose_forecast_frame(history_df.to_numpy(), features.to_numpy(), self.lag)
+            x_ = compose_forecast_frame(
+                history_df.to_numpy(),
+                features.to_numpy(),
+                self.lag
+            )
             y_ = self.model_.predict(x_)
 
             features.loc[self.target] = y_
@@ -494,7 +585,8 @@ class ClosePriceFM(ForecastModel):
 
     Attributes:
         model_ (BaseEstimator): regression model.
-        feature_models (Dict[str, ForecastModel]): dictionary of auxiliary models and their names.
+        feature_models (Dict[str, ForecastModel]): dictionary of auxiliary
+        models and their names.
         df_ (pd.DataFrame): dataset built for training.
         last_close_price (float): price of the last observed close prices.
         lag (int): number of lagged features.
@@ -507,7 +599,14 @@ class ClosePriceFM(ForecastModel):
     last_close_price: float
     lag: int
     train_size: float
-    indicators: List[str] = ['EMA20', 'RSI14', 'ATR14', 'MACD', 'MACD_Signal', 'MACD_Hist']
+    indicators: List[str] = [
+        'EMA20',
+        'RSI14',
+        'ATR14',
+        'MACD',
+        'MACD_Signal',
+        'MACD_Hist'
+    ]
 
     def __init__(
             self,
@@ -536,7 +635,8 @@ class ClosePriceFM(ForecastModel):
 
     def build_forecast_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Builds forecasting dataset (indexed with forecasting date range) from the dataframe.
+        Builds forecasting dataset (indexed with forecasting date range)
+        from the dataframe.
 
         Parameters:
             df (pd.DataFrame): dataframe from which dataset is built.
@@ -574,7 +674,10 @@ class ClosePriceFM(ForecastModel):
 
         tss = TimeSeriesSplit(n_splits=K, test_size=test_size, gap=24)
 
-        X_train, y_train = decompose_tabular_data(history_df.to_numpy(), h=self.lag)
+        X_train, y_train = decompose_tabular_data(
+            history_df.to_numpy(),
+            h=self.lag
+        )
         Xy = pd.DataFrame(X_train, y_train)
 
         score = 0
@@ -600,7 +703,10 @@ class ClosePriceFM(ForecastModel):
                 random_state=42
             )
 
-            regressor.fit(X_train, y_train, eval_set=[(X_train, y_train), (X_val, y_val)], verbose=False)
+            regressor.fit(X_train, y_train, eval_set=[
+                (X_train, y_train),
+                (X_val, y_val)
+            ], verbose=False)
 
             y_pred = regressor.predict(X_val)
 
@@ -628,10 +734,17 @@ class ClosePriceFM(ForecastModel):
             feature_model.fit(df)
 
         train_size = int(len(self.df_) * self.train_size)
-        train_set, test_set = self.df_.iloc[:train_size], self.df_.iloc[train_size:]
+        train_set, test_set = self.df_.iloc[:train_size], \
+            self.df_.iloc[train_size:]
 
-        X_train, y_train = decompose_tabular_data(train_set.to_numpy(), h=self.lag)
-        X_test, y_test = decompose_tabular_data(test_set.to_numpy(), h=self.lag)
+        X_train, y_train = decompose_tabular_data(
+            train_set.to_numpy(),
+            h=self.lag
+        )
+        X_test, y_test = decompose_tabular_data(
+            test_set.to_numpy(),
+            h=self.lag
+        )
 
         self.model_ = XGBRegressor(
             n_estimators=params['n_estimators'],
@@ -648,36 +761,73 @@ class ClosePriceFM(ForecastModel):
             random_state=42,
         )
 
-        self.model_.fit(X_train, y_train, eval_set=[(X_train, y_train), (X_test, y_test)], verbose=False)
+        self.model_.fit(X_train, y_train, eval_set=[
+            (X_train, y_train),
+            (X_test, y_test)
+        ], verbose=False)
 
         return self
 
     def predict(self, date_range: pd.DatetimeIndex) -> pd.Series:
 
-        prediction_df = self.build_forecast_data(pd.DataFrame(index=date_range))
+        prediction_df = self.build_forecast_data(
+            pd.DataFrame(index=date_range)
+        )
 
         history_df = self.df_.copy()
 
         for idx, date in enumerate(date_range):
 
-            feature_columns = [column for column in prediction_df.columns if column != 'Close']
+            feature_columns = [
+                column
+                for column
+                in prediction_df.columns
+                if column != 'Close'
+            ]
             features = prediction_df.loc[date, feature_columns].copy()
 
-            x_ = compose_forecast_frame(history_df.to_numpy(), features.to_numpy(), self.lag)
+            x_ = compose_forecast_frame(
+                history_df.to_numpy(),
+                features.to_numpy(),
+                self.lag
+            )
             y_ = self.model_.predict(x_)
 
-            history_close_price = pd.concat([history_df['Close'], pd.Series(y_, index=[date])])
-            history_high_price = pd.concat([history_df['High'], pd.Series(features['High'], index=[date])])
-            history_low_price = pd.concat([history_df['Low'], pd.Series(features['Low'], index=[date])])
+            history_close_price = pd.concat([
+                history_df['Close'],
+                pd.Series(y_, index=[date])
+            ])
+            history_high_price = pd.concat([
+                history_df['High'],
+                pd.Series(features['High'], index=[date])
+            ])
+            history_low_price = pd.concat([
+                history_df['Low'],
+                pd.Series(features['Low'], index=[date])
+            ])
 
             # Indicators
-            features.loc['EMA20'] = ta.trend.EMAIndicator(history_close_price, window=20).ema_indicator().iloc[-1]
-            features.loc['RSI14'] = ta.momentum.RSIIndicator(history_close_price, window=14).rsi().iloc[-1]
+            features.loc['EMA20'] = ta.trend.EMAIndicator(
+                history_close_price,
+                window=20
+            ).ema_indicator().iloc[-1]
+            features.loc['RSI14'] = ta.momentum.RSIIndicator(
+                history_close_price,
+                window=14
+            ).rsi().iloc[-1]
             features.loc['ATR14'] = ta.volatility.AverageTrueRange(
-                history_high_price, history_low_price, history_close_price, window=14
+                history_high_price,
+                history_low_price,
+                history_close_price,
+                window=14
             ).average_true_range().iloc[-1]
 
-            macd = ta.trend.MACD(history_close_price, window_slow=26, window_fast=12, window_sign=9)
+            macd = ta.trend.MACD(
+                history_close_price,
+                window_slow=26,
+                window_fast=12,
+                window_sign=9
+            )
             features.loc['MACD'] = macd.macd().iloc[-1]
             features.loc['MACD_Signal'] = macd.macd_signal().iloc[-1]
             features.loc['MACD_Hist'] = macd.macd_diff().iloc[-1]
@@ -685,12 +835,21 @@ class ClosePriceFM(ForecastModel):
             # Set future indicator values as current
             if idx < len(date_range)-1:
                 for indicator in self.indicators:
-                    prediction_df.loc[date_range[idx+1], indicator] = features[indicator]
+                    prediction_df.loc[
+                        date_range[idx+1],
+                        indicator
+                    ] = features[indicator]
                 # Set `Open` price
-                prediction_df.loc[date_range[idx+1], 'Open'] = history_df['Close'].iloc[-1]
+                prediction_df.loc[
+                    date_range[idx+1],
+                    'Open'
+                ] = history_df['Close'].iloc[-1]
 
             features.loc['Close'] = y_
-            history_df = pd.concat([history_df, pd.DataFrame.from_records([features], index=[date])])
+            history_df = pd.concat([
+                history_df,
+                pd.DataFrame.from_records([features], index=[date])
+            ])
 
         # Recover original time series
         y_pred = history_df.loc[date_range[0]:date_range[-1], 'Close']
@@ -741,7 +900,9 @@ class LSTMCloseFM(ForecastModel):
             Dense(params['layer3'], activation='relu'),
             Dense(len(self.target_names))
         ])
-        model.compile(optimizer=Adam(learning_rate=params['learning_rate']), loss='mse')
+        model.compile(optimizer=Adam(
+            learning_rate=params['learning_rate']
+        ), loss='mse')
         return model
 
     def build(self, df: pd.DataFrame):
@@ -760,7 +921,11 @@ class LSTMCloseFM(ForecastModel):
         df = df.dropna()
 
         df['year'] = df.index.year
-        df['year'] = pd.Categorical(df['year'], categories=range(2023, 2026), ordered=True)
+        df['year'] = pd.Categorical(
+            df['year'],
+            categories=range(2023, 2026),
+            ordered=True
+        )
 
         # Month (1-12)
         month_index = df.index.month
@@ -796,7 +961,11 @@ class LSTMCloseFM(ForecastModel):
         df = df.copy()
 
         df['year'] = df.index.year
-        df['year'] = pd.Categorical(df['year'], categories=range(2023, 2026), ordered=True)
+        df['year'] = pd.Categorical(
+            df['year'],
+            categories=range(2023, 2026),
+            ordered=True
+        )
 
         # Month (1-12)
         month_index = df.index.month
@@ -866,8 +1035,10 @@ class LSTMCloseFM(ForecastModel):
 
         for train_idx, val_idx in tss.split(X):
 
-            X_train, X_val = X[train_idx][:-params['lag']], X[val_idx][:-params['lag']]
-            y_train, y_val = y[train_idx][params['lag']:], y[val_idx][params['lag']:]
+            X_train, X_val = X[train_idx][:-params['lag']], \
+                X[val_idx][:-params['lag']]
+            y_train, y_val = y[train_idx][params['lag']:], \
+                y[val_idx][params['lag']:]
 
             self.model = self._build_model(params)
 
@@ -876,7 +1047,10 @@ class LSTMCloseFM(ForecastModel):
                 validation_data=(X_val, y_val),
                 epochs=self.epochs,
                 batch_size=64,
-                callbacks=[EarlyStopping(patience=self.patience, restore_best_weights=True)],
+                callbacks=[EarlyStopping(
+                    patience=self.patience,
+                    restore_best_weights=True
+                )],
                 verbose=0
             )
 
@@ -900,7 +1074,8 @@ class LSTMCloseFM(ForecastModel):
 
         self.df_ = self.build(df)
         train_size = int(len(self.df_) * self.train_size)
-        train_set, val_set = self.df_.iloc[:train_size], self.df_.iloc[train_size:]
+        train_set, val_set = self.df_.iloc[:train_size], \
+            self.df_.iloc[train_size:]
 
         X_train, y_train = self._prepare_data(train_set, lag=params['lag'])
         X_val, y_val = self._prepare_data(val_set, lag=params['lag'])
@@ -913,50 +1088,84 @@ class LSTMCloseFM(ForecastModel):
             validation_data=(X_val, y_val),
             epochs=self.epochs,
             batch_size=64,
-            callbacks=[EarlyStopping(patience=self.patience, restore_best_weights=True)],
+            callbacks=[EarlyStopping(
+                patience=self.patience,
+                restore_best_weights=True
+            )],
             verbose=1
         )
         return self
 
     def predict(self, date_range: pd.DatetimeIndex) -> pd.Series:
 
-        prediction_df = self.build_forecast_data(pd.DataFrame(index=date_range))
+        prediction_df = self.build_forecast_data(
+            pd.DataFrame(index=date_range)
+        )
 
         history_df = self.df_.copy()
 
         for idx, date in enumerate(date_range):
-            x_ = history_df.iloc[-self.params['lag']:].to_numpy().reshape(1, -1, self.params['lag'])
+            x_ = history_df.iloc[-self.params[
+                'lag'
+            ]:].to_numpy().reshape(1, -1, self.params['lag'])
             y_ = self.model.predict(x_, verbose=0)[0]
 
             prediction_df.loc[date, self.target_names] = y_
 
-            history_df = pd.concat([history_df, pd.DataFrame.from_records([prediction_df.loc[date]], index=[date])])
+            history_df = pd.concat([
+                history_df,
+                pd.DataFrame.from_records(
+                    [prediction_df.loc[date]],
+                    index=[date]
+                )
+            ])
 
             # Indicators
-            history_df['EMA20'] = ta.trend.EMAIndicator(history_df['Close'], window=20).ema_indicator()
-            history_df['RSI14'] = ta.momentum.RSIIndicator(history_df['Close'], window=14).rsi()
+            history_df['EMA20'] = ta.trend.EMAIndicator(
+                history_df['Close'],
+                window=20
+            ).ema_indicator()
+            history_df['RSI14'] = ta.momentum.RSIIndicator(
+                history_df['Close'],
+                window=14
+            ).rsi()
             history_df['ATR14'] = ta.volatility.AverageTrueRange(
-                history_df['High'], history_df['Low'], history_df['Close'], window=14
+                history_df['High'],
+                history_df['Low'],
+                history_df['Close'],
+                window=14
             ).average_true_range()
 
-            macd = ta.trend.MACD(history_df['Close'], window_slow=26, window_fast=12, window_sign=9)
+            macd = ta.trend.MACD(
+                history_df['Close'],
+                window_slow=26,
+                window_fast=12,
+                window_sign=9
+            )
             history_df['MACD'] = macd.macd()
             history_df['MACD_Signal'] = macd.macd_signal()
             history_df['MACD_Hist'] = macd.macd_diff()
 
             # Set `Open` price
             if idx < len(date_range)-1:
-                prediction_df.loc[date_range[idx+1], 'Open'] = history_df['Close'].iloc[-1]
+                prediction_df.loc[
+                    date_range[idx+1],
+                    'Open'
+                ] = history_df['Close'].iloc[-1]
 
         # Recover original time series
         y_pred = history_df.loc[date_range[0]:date_range[-1]]
         close_price_cumulative = np.cumsum(y_pred)
-        close_price_prediction = self.last_close_price + close_price_cumulative['Close']
+        close_price_prediction = self.last_close_price + \
+            close_price_cumulative['Close']
 
         # Other targets
-        # open_price_prediction = self.last_close_price + close_price_cumulative['Open']
-        # high_price_prediction = self.last_close_price + close_price_cumulative['High']
-        # low_price_prediction = self.last_close_price + close_price_cumulative['Low']
+        # open_price_prediction = self.last_close_price + \
+        # close_price_cumulative['Open']
+        # high_price_prediction = self.last_close_price + \
+        # close_price_cumulative['High']
+        # low_price_prediction = self.last_close_price + \
+        # close_price_cumulative['Low']
 
         return close_price_prediction
 
@@ -973,6 +1182,7 @@ class LSTMCloseFM(ForecastModel):
         with open(f"{path}/params.config", "r") as f:
             self.params = json.loads(f.read())
 
+
 class ClosePriceFM_Silver(ForecastModel):
     """
     Forecasting model for `Close` target.
@@ -981,7 +1191,8 @@ class ClosePriceFM_Silver(ForecastModel):
 
     Attributes:
         model_ (BaseEstimator): regression model.
-        feature_models (Dict[str, ForecastModel]): dictionary of auxiliary models and their names.
+        feature_models (Dict[str, ForecastModel]): dictionary
+        of auxiliary models and their names.
         df_ (pd.DataFrame): dataset built for training.
         last_close_price (float): price of the last observed close prices.
         lag (int): number of lagged features.
@@ -994,7 +1205,14 @@ class ClosePriceFM_Silver(ForecastModel):
     last_close_price: float
     lag: int
     train_size: float
-    indicators: List[str] = ['EMA20', 'RSI14', 'ATR14', 'MACD', 'MACD_Signal', 'MACD_Hist']
+    indicators: List[str] = [
+        'EMA20',
+        'RSI14',
+        'ATR14',
+        'MACD',
+        'MACD_Signal',
+        'MACD_Hist'
+    ]
 
     def __init__(
             self,
@@ -1018,17 +1236,21 @@ class ClosePriceFM_Silver(ForecastModel):
         # First difference to remove trend
         self.last_close_price = df['Close'].iloc[-1]
         df.loc[:, 'Close'] = df['Close'].diff()
-        
-        #if 'SP500' in df.columns:
-        #    df['SP500'] = pd.to_numeric(df['SP500'], errors='coerce').interpolate(method='time')
-            
+
+        # if 'SP500' in df.columns:
+        #     df['SP500'] = pd.to_numeric(
+        #         df['SP500'],
+        #         errors='coerce'
+        #     ).interpolate(method='time')
+
         df = df.dropna()
 
         return df
 
     def build_forecast_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Builds forecasting dataset (indexed with forecasting date range) from the dataframe.
+        Builds forecasting dataset (indexed with forecasting date range)
+        from the dataframe.
 
         Parameters:
             df (pd.DataFrame): dataframe from which dataset is built.
@@ -1053,11 +1275,13 @@ class ClosePriceFM_Silver(ForecastModel):
         # Set Indicators
         for indicator in self.indicators:
             df.loc[:, indicator] = np.nan
-            #if indicator == 'SP500':
-                # Use last known SP500 value or predict it if needed
-               # df.loc[df.index[0], 'SP500'] = self.df_['SP500'].iloc[-1] if 'SP500' in self.df_.columns else np.nan
-            #else:
-                #df.loc[df.index[0], indicator] = self.df_[indicator].iloc[-1]
+            # if indicator == 'SP500':
+            #     Use last known SP500 value or predict it if needed
+            #    df.loc[df.index[0], 'SP500'] = \
+            #    self.df_['SP500'].iloc[-1] \
+            # if 'SP500' in self.df_.columns else np.nan
+            # else:
+            #     df.loc[df.index[0], indicator] = self.df_[indicator].iloc[-1]
             df.loc[df.index[0], indicator] = self.df_[indicator].iloc[-1]
 
         return df
@@ -1072,7 +1296,10 @@ class ClosePriceFM_Silver(ForecastModel):
 
         tss = TimeSeriesSplit(n_splits=K, test_size=test_size, gap=24)
 
-        X_train, y_train = decompose_tabular_data(history_df.to_numpy(), h=self.lag)
+        X_train, y_train = decompose_tabular_data(
+            history_df.to_numpy(),
+            h=self.lag
+        )
         Xy = pd.DataFrame(X_train, y_train)
 
         score = 0
@@ -1098,7 +1325,10 @@ class ClosePriceFM_Silver(ForecastModel):
                 random_state=42
             )
 
-            regressor.fit(X_train, y_train, eval_set=[(X_train, y_train), (X_val, y_val)], verbose=False)
+            regressor.fit(X_train, y_train, eval_set=[
+                (X_train, y_train),
+                (X_val, y_val)
+            ], verbose=False)
 
             y_pred = regressor.predict(X_val)
 
@@ -1126,10 +1356,17 @@ class ClosePriceFM_Silver(ForecastModel):
             feature_model.fit(df)
 
         train_size = int(len(self.df_) * self.train_size)
-        train_set, test_set = self.df_.iloc[:train_size], self.df_.iloc[train_size:]
+        train_set, test_set = self.df_.iloc[:train_size], \
+            self.df_.iloc[train_size:]
 
-        X_train, y_train = decompose_tabular_data(train_set.to_numpy(), h=self.lag)
-        X_test, y_test = decompose_tabular_data(test_set.to_numpy(), h=self.lag)
+        X_train, y_train = decompose_tabular_data(
+            train_set.to_numpy(),
+            h=self.lag
+        )
+        X_test, y_test = decompose_tabular_data(
+            test_set.to_numpy(),
+            h=self.lag
+        )
 
         self.model_ = XGBRegressor(
             n_estimators=params['n_estimators'],
@@ -1146,84 +1383,146 @@ class ClosePriceFM_Silver(ForecastModel):
             random_state=42,
         )
 
-        self.model_.fit(X_train, y_train, eval_set=[(X_train, y_train), (X_test, y_test)], verbose=False)
+        self.model_.fit(X_train, y_train, eval_set=[
+            (X_train, y_train),
+            (X_test, y_test)
+        ], verbose=False)
 
         return self
 
-    def predict(self, date_range: pd.DatetimeIndex, initial_price: float = None) -> pd.Series:
+    def predict(
+            self,
+            date_range: pd.DatetimeIndex,
+            initial_price: float = None) -> pd.Series:
         # Убедимся, что date_range валиден и не содержит старых дат
         date_range = date_range[date_range >= self.df_.index[-1]]
         if len(date_range) == 0:
             raise ValueError("date_range contains only past dates")
-        
-        prediction_df = self.build_forecast_data(pd.DataFrame(index=date_range))
+
+        prediction_df = self.build_forecast_data(
+            pd.DataFrame(index=date_range)
+        )
         history_df = self.df_.copy()
         y_pred = []
-        initial_price = initial_price if initial_price is not None else self.last_close_price
-        max_volatility = initial_price * 0.02  # 3% от начальной цены за 48 часов
-        max_step_change = initial_price * 0.0003  # 0.1% за шаг 
-        min_price = initial_price * 0.93  # Минимальная цена 
-        
+        initial_price = initial_price \
+            if initial_price is not None else self.last_close_price
+        # 3% от начальной цены за 48 часов
+        max_volatility = initial_price * 0.02
+        # 0.1% за шаг
+        max_step_change = initial_price * 0.0003
+        # Минимальная цена
+        min_price = initial_price * 0.93
+
         for idx, date in enumerate(date_range):
-            feature_columns = [column for column in prediction_df.columns if column != 'Close']
+            feature_columns = [column
+                               for column
+                               in prediction_df.columns
+                               if column != 'Close']
             features = prediction_df.loc[date, feature_columns].copy()
-            x_ = compose_forecast_frame(history_df.to_numpy(), features.to_numpy(), self.lag)
+            x_ = compose_forecast_frame(
+                history_df.to_numpy(),
+                features.to_numpy(),
+                self.lag
+            )
             y_ = self.model_.predict(x_)[0]
             if idx > 0:
-                alpha = 0.05  # Коэффициент сглаживания (0 < alpha < 1, меньшие значения - более плавное сглаживание)
+                alpha = 0.05  # Коэффициент сглаживания (0 < alpha < 1,
+                # меньшие значения - более плавное сглаживание)
                 y_ = alpha * y_ + (1 - alpha) * y_pred[-1]
             # Умеренные колебания
             atr = features['ATR14'] if 'ATR14' in features else 0.05
-            noise = np.random.normal(0, atr * 0.02)  # Очень слабый шум
-            sin_factor = np.sin(idx / 8) * max_volatility * 0.05  # Период ~16 часов
+            # Очень слабый шум
+            noise = np.random.normal(0, atr * 0.02)
+            # Период ~16 часов
+            sin_factor = np.sin(idx / 8) * max_volatility * 0.05
             y_ = y_ + noise + sin_factor
-            
+
             # Ограничиваем изменение за шаг
             y_ = np.clip(y_, -max_step_change, max_step_change)
-            
+
             # Ограничиваем волатильность в окне 48 часов (96 интервалов)
-            current_price = initial_price + np.sum(y_pred) + y_ if y_pred else initial_price + y_
+            current_price = initial_price + np.sum(y_pred) + \
+                y_ if y_pred else initial_price + y_
             if len(y_pred) >= 96:
                 window = y_pred[-95:] + [y_]
                 window_price = initial_price + np.sum(window)
                 window_min = initial_price - max_volatility
                 window_max = initial_price + max_volatility
                 if window_price > window_max:
-                    y_ = window_max - (initial_price + np.sum(y_pred) if y_pred else initial_price)
+                    y_ = window_max - (initial_price + np.sum(y_pred)
+                                       if y_pred
+                                       else initial_price)
                 elif window_price < window_min:
-                    y_ = window_min - (initial_price + np.sum(y_pred) if y_pred else initial_price)
-            
+                    y_ = window_min - (initial_price + np.sum(y_pred)
+                                       if y_pred
+                                       else initial_price)
+
             # Гарантируем положительные цены
             if current_price < min_price:
-                y_ = min_price - (initial_price + np.sum(y_pred) if y_pred else initial_price)
-            
+                y_ = min_price - (initial_price + np.sum(y_pred)
+                                  if y_pred
+                                  else initial_price)
+
             y_pred.append(y_)
-            
+
             # Обновляем историю и индикаторы
-            history_close_price = pd.concat([history_df['Close'], pd.Series(y_, index=[date])])
-            history_high_price = pd.concat([history_df['High'], pd.Series(features['High'], index=[date])])
-            history_low_price = pd.concat([history_df['Low'], pd.Series(features['Low'], index=[date])])
-            features.loc['EMA20'] = ta.trend.EMAIndicator(history_close_price, window=20).ema_indicator().iloc[-1]
-            features.loc['RSI14'] = ta.momentum.RSIIndicator(history_close_price, window=14).rsi().iloc[-1]
+            history_close_price = pd.concat(
+                [history_df['Close'], pd.Series(y_, index=[date])]
+            )
+            history_high_price = pd.concat(
+                [
+                    history_df['High'],
+                    pd.Series(features['High'], index=[date])
+                ]
+            )
+            history_low_price = pd.concat(
+                [history_df['Low'], pd.Series(features['Low'], index=[date])]
+            )
+            features.loc['EMA20'] = ta.trend.EMAIndicator(
+                history_close_price, window=20).ema_indicator().iloc[-1]
+            features.loc['RSI14'] = ta.momentum.RSIIndicator(
+                history_close_price,
+                window=14
+            ).rsi().iloc[-1]
             features.loc['ATR14'] = ta.volatility.AverageTrueRange(
-                history_high_price, history_low_price, history_close_price, window=14
+                history_high_price,
+                history_low_price,
+                history_close_price,
+                window=14
             ).average_true_range().iloc[-1]
-            macd = ta.trend.MACD(history_close_price, window_slow=26, window_fast=12, window_sign=9)
+            macd = ta.trend.MACD(
+                history_close_price,
+                window_slow=26,
+                window_fast=12,
+                window_sign=9
+            )
             features.loc['MACD'] = macd.macd().iloc[-1]
             features.loc['MACD_Signal'] = macd.macd_signal().iloc[-1]
             features.loc['MACD_Hist'] = macd.macd_diff().iloc[-1]
             if idx < len(date_range)-1:
                 for indicator in self.indicators:
-                    prediction_df.loc[date_range[idx+1], indicator] = features[indicator]
-                prediction_df.loc[date_range[idx+1], 'Open'] = history_close_price.iloc[-1]
+                    prediction_df.loc[
+                        date_range[idx+1],
+                        indicator
+                    ] = features[indicator]
+                prediction_df.loc[
+                    date_range[idx+1],
+                    'Open'
+                ] = history_close_price.iloc[-1]
             features.loc['Close'] = y_
             new_row = pd.DataFrame.from_records([features], index=[date])
             history_df = pd.concat([history_df, new_row])
-            history_df = history_df.loc[~history_df.index.duplicated(keep='last')]
-        
+            history_df = history_df.loc[
+                ~history_df.index.duplicated(keep='last')
+            ]
+
         y_pred = pd.Series(y_pred, index=date_range)
-        smoothed_y_pred = y_pred.rolling(window=5, center=True, min_periods=1).mean()  # Скользящее среднее с окном 5
-        
+        smoothed_y_pred = y_pred.rolling(
+            window=5,
+            center=True,
+            min_periods=1
+        ).mean()  # Скользящее среднее с окном 5
+
         price_prediction = initial_price + np.cumsum(smoothed_y_pred)
         return price_prediction
 

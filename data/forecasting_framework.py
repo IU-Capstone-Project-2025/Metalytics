@@ -1,7 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.dates import DayLocator, DateFormatter
-from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
+from sklearn.metrics import mean_absolute_error, \
+    mean_squared_error, mean_absolute_percentage_error
 import os
 from forecasting_models import ForecastModel, ClosePriceFM
 from data_loader import GoldDataLoader
@@ -42,7 +43,8 @@ class ForecastFramework:
             self.test_set = None
         else:
             train_size = int(len(self.df) * train_size)
-            self.train_set, self.test_set = self.df.iloc[:train_size], self.df.iloc[train_size:]
+            self.train_set, self.test_set = self.df.iloc[:train_size], \
+                self.df.iloc[train_size:]
 
         self.forecast_model = forecast_model
         self.name = name
@@ -64,7 +66,9 @@ class ForecastFramework:
         """
         if (self.test_set is None):
             raise ValueError("No test set were provided")
-        forecast_values = self.forecast_model.predict(self.test_set.index).to_numpy().reshape(-1)
+        forecast_values = self.forecast_model.predict(
+            self.test_set.index
+        ).to_numpy().reshape(-1)
         true_values = self.test_set[self.target_columns].to_numpy()
         results = dict(keys=metric_funcs.keys())
         for metric, func in metric_funcs.items():
@@ -77,16 +81,28 @@ class ForecastFramework:
         """
         if (self.test_set is None):
             raise ValueError("No test set were provided")
-        forecast_values = self.forecast_model.predict(self.test_set.index).to_numpy().reshape(-1)
+        forecast_values = self.forecast_model.predict(
+            self.test_set.index
+        ).to_numpy().reshape(-1)
         true_values = self.test_set[self.target_columns].to_numpy()
 
-        fig, ax = plt.subplots(nrows=true_values.shape[1], figsize=(12, 8), squeeze=False)
+        fig, ax = plt.subplots(
+            nrows=true_values.shape[1],
+            figsize=(12, 8),
+            squeeze=False
+        )
 
         for target_idx in range(true_values.shape[1]):
             ax[target_idx, 0].plot(self.test_set.index, true_values)
-            ax[target_idx, 0].plot(self.test_set.index, forecast_values, linestyle='--')
+            ax[
+                target_idx,
+                0
+            ].plot(self.test_set.index, forecast_values, linestyle='--')
             ax[target_idx, 0].xaxis.set_major_locator(DayLocator(interval=1))
-            ax[target_idx, 0].xaxis.set_major_formatter(DateFormatter('%b, %d'))
+            ax[
+                target_idx,
+                0
+            ].xaxis.set_major_formatter(DateFormatter('%b, %d'))
             ax[target_idx, 0].set_ylabel(self.target_columns[target_idx])
         return fig
 
@@ -127,7 +143,13 @@ class ForecastFramework:
             ForecastFramework: constructed framework object.
         """
         assert os.path.exists(path)
-        framework = ForecastFramework(data_loader, target_columns, forecast_model, name, train_size)
+        framework = ForecastFramework(
+            data_loader,
+            target_columns,
+            forecast_model,
+            name,
+            train_size
+        )
         framework.forecast_model.load(framework.train_set, path)
         return framework
 
@@ -160,6 +182,8 @@ class ForecastFramework:
         date_index = self.df.index
         return pd.date_range(
             date_index[-1] + pd.Timedelta(value=30, unit='min'),
-            date_index[-1] + pd.Timedelta(value=30, unit='min') + pd.Timedelta(value=value, unit=unit),
+            date_index[-1] + pd.Timedelta(
+                value=30, unit='min'
+            ) + pd.Timedelta(value=value, unit=unit),
             freq='30min'
         )

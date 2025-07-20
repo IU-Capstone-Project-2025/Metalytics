@@ -7,3 +7,6 @@ uvicorn
 pytest
 httpx
 flake8
+tensorflow
+beautifulsoup4==4.12.3
+quandl==3.7.0

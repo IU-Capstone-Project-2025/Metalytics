@@ -994,7 +994,7 @@ class ClosePriceFM_Silver(ForecastModel):
     last_close_price: float
     lag: int
     train_size: float
-    indicators: List[str] = ['EMA20', 'RSI14', 'ATR14', 'MACD', 'MACD_Signal', 'MACD_Hist', 'SP500']
+    indicators: List[str] = ['EMA20', 'RSI14', 'ATR14', 'MACD', 'MACD_Signal', 'MACD_Hist']
 
     def __init__(
             self,
@@ -1013,13 +1013,14 @@ class ClosePriceFM_Silver(ForecastModel):
     def build(self, df: pd.DataFrame):
 
         df = df.copy()
-
+        if 'SP500' in df.columns:
+            df = df.drop(columns=['SP500'])
         # First difference to remove trend
         self.last_close_price = df['Close'].iloc[-1]
         df.loc[:, 'Close'] = df['Close'].diff()
         
-        if 'SP500' in df.columns:
-            df['SP500'] = pd.to_numeric(df['SP500'], errors='coerce').interpolate(method='time')
+        #if 'SP500' in df.columns:
+        #    df['SP500'] = pd.to_numeric(df['SP500'], errors='coerce').interpolate(method='time')
             
         df = df.dropna()
 
@@ -1037,7 +1038,8 @@ class ClosePriceFM_Silver(ForecastModel):
         """
 
         df = df.copy()
-
+        if 'SP500' in df.columns:
+            df = df.drop(columns=['SP500'])
         # Predict feature targets
         for feature, feature_model in self.feature_models.items():
             df.loc[:, feature] = feature_model.predict(df.index)
@@ -1051,11 +1053,12 @@ class ClosePriceFM_Silver(ForecastModel):
         # Set Indicators
         for indicator in self.indicators:
             df.loc[:, indicator] = np.nan
-            if indicator == 'SP500':
+            #if indicator == 'SP500':
                 # Use last known SP500 value or predict it if needed
-                df.loc[df.index[0], 'SP500'] = self.df_['SP500'].iloc[-1] if 'SP500' in self.df_.columns else np.nan
-            else:
-                df.loc[df.index[0], indicator] = self.df_[indicator].iloc[-1]
+               # df.loc[df.index[0], 'SP500'] = self.df_['SP500'].iloc[-1] if 'SP500' in self.df_.columns else np.nan
+            #else:
+                #df.loc[df.index[0], indicator] = self.df_[indicator].iloc[-1]
+            df.loc[df.index[0], indicator] = self.df_[indicator].iloc[-1]
 
         return df
 
@@ -1148,51 +1151,80 @@ class ClosePriceFM_Silver(ForecastModel):
         return self
 
     def predict(self, date_range: pd.DatetimeIndex, initial_price: float = None) -> pd.Series:
-
+        # Убедимся, что date_range валиден и не содержит старых дат
+        date_range = date_range[date_range >= self.df_.index[-1]]
+        if len(date_range) == 0:
+            raise ValueError("date_range contains only past dates")
+        
         prediction_df = self.build_forecast_data(pd.DataFrame(index=date_range))
-
         history_df = self.df_.copy()
-
+        y_pred = []
+        initial_price = initial_price if initial_price is not None else self.last_close_price
+        max_volatility = initial_price * 0.02  # 3% от начальной цены за 48 часов
+        max_step_change = initial_price * 0.0003  # 0.1% за шаг 
+        min_price = initial_price * 0.93  # Минимальная цена 
+        
         for idx, date in enumerate(date_range):
-
             feature_columns = [column for column in prediction_df.columns if column != 'Close']
             features = prediction_df.loc[date, feature_columns].copy()
-
             x_ = compose_forecast_frame(history_df.to_numpy(), features.to_numpy(), self.lag)
-            y_ = self.model_.predict(x_)
-
+            y_ = self.model_.predict(x_)[0]
+            if idx > 0:
+                alpha = 0.05  # Коэффициент сглаживания (0 < alpha < 1, меньшие значения - более плавное сглаживание)
+                y_ = alpha * y_ + (1 - alpha) * y_pred[-1]
+            # Умеренные колебания
+            atr = features['ATR14'] if 'ATR14' in features else 0.05
+            noise = np.random.normal(0, atr * 0.02)  # Очень слабый шум
+            sin_factor = np.sin(idx / 8) * max_volatility * 0.05  # Период ~16 часов
+            y_ = y_ + noise + sin_factor
+            
+            # Ограничиваем изменение за шаг
+            y_ = np.clip(y_, -max_step_change, max_step_change)
+            
+            # Ограничиваем волатильность в окне 48 часов (96 интервалов)
+            current_price = initial_price + np.sum(y_pred) + y_ if y_pred else initial_price + y_
+            if len(y_pred) >= 96:
+                window = y_pred[-95:] + [y_]
+                window_price = initial_price + np.sum(window)
+                window_min = initial_price - max_volatility
+                window_max = initial_price + max_volatility
+                if window_price > window_max:
+                    y_ = window_max - (initial_price + np.sum(y_pred) if y_pred else initial_price)
+                elif window_price < window_min:
+                    y_ = window_min - (initial_price + np.sum(y_pred) if y_pred else initial_price)
+            
+            # Гарантируем положительные цены
+            if current_price < min_price:
+                y_ = min_price - (initial_price + np.sum(y_pred) if y_pred else initial_price)
+            
+            y_pred.append(y_)
+            
+            # Обновляем историю и индикаторы
             history_close_price = pd.concat([history_df['Close'], pd.Series(y_, index=[date])])
             history_high_price = pd.concat([history_df['High'], pd.Series(features['High'], index=[date])])
             history_low_price = pd.concat([history_df['Low'], pd.Series(features['Low'], index=[date])])
-
-            # Indicators
             features.loc['EMA20'] = ta.trend.EMAIndicator(history_close_price, window=20).ema_indicator().iloc[-1]
             features.loc['RSI14'] = ta.momentum.RSIIndicator(history_close_price, window=14).rsi().iloc[-1]
             features.loc['ATR14'] = ta.volatility.AverageTrueRange(
                 history_high_price, history_low_price, history_close_price, window=14
             ).average_true_range().iloc[-1]
-
             macd = ta.trend.MACD(history_close_price, window_slow=26, window_fast=12, window_sign=9)
             features.loc['MACD'] = macd.macd().iloc[-1]
             features.loc['MACD_Signal'] = macd.macd_signal().iloc[-1]
             features.loc['MACD_Hist'] = macd.macd_diff().iloc[-1]
-
-            # Set future indicator values as current
             if idx < len(date_range)-1:
                 for indicator in self.indicators:
                     prediction_df.loc[date_range[idx+1], indicator] = features[indicator]
-                # Set `Open` price
-                prediction_df.loc[date_range[idx+1], 'Open'] = history_df['Close'].iloc[-1]
-
+                prediction_df.loc[date_range[idx+1], 'Open'] = history_close_price.iloc[-1]
             features.loc['Close'] = y_
             new_row = pd.DataFrame.from_records([features], index=[date])
             history_df = pd.concat([history_df, new_row])
             history_df = history_df.loc[~history_df.index.duplicated(keep='last')]
-
-        # Recover original time series
-        y_pred = history_df.loc[date_range[0]:date_range[-1], 'Close']
-        price_prediction = (initial_price if initial_price is not None else self.last_close_price) + np.cumsum(y_pred)
         
+        y_pred = pd.Series(y_pred, index=date_range)
+        smoothed_y_pred = y_pred.rolling(window=5, center=True, min_periods=1).mean()  # Скользящее среднее с окном 5
+        
+        price_prediction = initial_price + np.cumsum(smoothed_y_pred)
         return price_prediction
 
     def dump(self, path: str) -> None:

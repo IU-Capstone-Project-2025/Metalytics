@@ -82,16 +82,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function shortNumberFormat(num) {
-    if (selectedMetal === 'zinc') {
-      return num.toFixed(4);
-    }
-    
-    if (Math.abs(num) >= 1e6) return (num / 1e6).toFixed(1) + 'M';
-    if (Math.abs(num) >= 1e3) return (num / 1e3).toFixed(1) + 'K';
-    return num.toFixed(1);
-  }
-
   function getYAxisOptions() {
     if (window.innerWidth <= 768) {
       return {
@@ -104,9 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else {
       return {
         ticks: {
-          callback: function(value) {
-            return shortNumberFormat(value);
-          }
+          display: true
         }
       };
     }
@@ -327,11 +315,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Initialize prediction button availability for gold (default metal)
+  setPredictedButtonAvailability(true);
+
   document.querySelectorAll('[data-metal]').forEach(button => {
     button.addEventListener('click', async () => {
       selectedMetal = button.dataset.metal;
       activeMetal();
-      if (selectedMetal === 'silver' || selectedMetal === 'zinc') {
+      if (selectedMetal === 'zinc') {
         selectedDate = 'day';
         setPredictedButtonAvailability(false);
         document.querySelectorAll('.graph__button[data-interval]').forEach(btn => {
@@ -343,7 +334,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fetchData('day');
       } 
       
-      else if (selectedMetal === 'gold') {
+      else if (selectedMetal === 'gold' || selectedMetal === 'silver') {
         selectedDate = 'day';
         setPredictedButtonAvailability(true);
         document.querySelectorAll('.graph__button[data-interval]').forEach(btn => {
@@ -543,27 +534,21 @@ function getFallbackNews(metal) {
 async function updateNewsContent() {
   const swiperWrapper = document.querySelector('.swiper-wrapper');
   
-  // Show loading state
   swiperWrapper.innerHTML = '<div class="swiper-slide"><div><p class="news__info">Loading news...</p></div></div>';
   
   try {
-    // Fetch news from backend
     const newsData = await fetchNewsFromBackend(selectedMetal);
     
     swiperWrapper.innerHTML = '';
-    
-    // Helper to render news with ellipsis and link
     function renderNewsText(newsItem) {
       let text = newsItem.preview || newsItem.title;
-      if (text && text.trim().endsWith('...') && newsItem.url) {
-        // Remove the last ... and add link on a new line
-        text = text.replace(/\.\.\.$/, '...<br><a href="' + newsItem.url + '" target="_blank" style="color:#D3AC49;">More details here</a>');
+      if (selectedMetal !== 'silver' && newsItem.url) {
+        text = text + '<br><a href="' + newsItem.url + '" target="_blank" style="color:#D3AC49;">More details</a>';
       }
       return text;
     }
 
     if (newsData.length === 0) {
-      // Try fallback news for metals without backend data
       const fallbackData = getFallbackNews(selectedMetal);
       if (fallbackData.length > 0) {
         fallbackData.slice(0, 4).forEach(newsItem => {
@@ -586,7 +571,6 @@ async function updateNewsContent() {
           swiperWrapper.appendChild(slide);
         });
       } else {
-        // Show no news message
         const slide = document.createElement('div');
         slide.className = 'swiper-slide';
         slide.innerHTML = `
@@ -602,7 +586,6 @@ async function updateNewsContent() {
         swiperWrapper.appendChild(slide);
       }
     } else {
-      // Display real news from backend, limit to 4
       newsData.slice(0, 4).forEach(newsItem => {
         const slide = document.createElement('div');
         slide.className = 'swiper-slide';
@@ -622,7 +605,7 @@ async function updateNewsContent() {
     
     if (swiper) {
       swiper.update();
-      swiper.slideTo(0, 0); // Go to the first slide instantly
+      swiper.slideTo(0, 0);
     }
   } catch (error) {
     console.error("Error updating news content:", error);

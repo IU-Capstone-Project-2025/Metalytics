@@ -1,11 +1,14 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.dates import DayLocator, DateFormatter
+from matplotlib.dates import HourLocator, MinuteLocator, DateFormatter
 from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
+from sklearn.model_selection import TimeSeriesSplit
 import os
+from typing import Dict, Any
 from forecasting_models import ForecastModel, ClosePriceFM
 from data_loader import GoldDataLoader
 from filter import SGFilter
+import numpy as np
 
 
 class ForecastFramework:
@@ -29,20 +32,30 @@ class ForecastFramework:
             target_columns=['Close'],
             forecast_model=ClosePriceFM(),
             name="baseline_model",
-            train_size=1.0
+            test_size=0
     ):
+        """
+        (Constructor)
+
+        Parameters:
+            path (str): path to the folder with model files.
+            df (pd.DataFrame): dataframe for model fitting.
+            target_columns (List[str]): list of columns predicted.
+            forecast_model (ForecastModel): model forecasting target.
+            name (str): name of the model.
+            test_size (int): number of last half-hours dedicated for testing.
+        """
         self.df = data_loader.load_data().asfreq('30min').bfill().ffill()
         self.filter = SGFilter()
         self.df = self.filter.filter(self.df)
 
         self.target_columns = target_columns
 
-        if (train_size == 1):
+        if (test_size == 0):
             self.train_set = self.df
             self.test_set = None
         else:
-            train_size = int(len(self.df) * train_size)
-            self.train_set, self.test_set = self.df.iloc[:train_size], self.df.iloc[train_size:]
+            self.train_set, self.test_set = self.df.iloc[:-test_size], self.df.iloc[-test_size:]
 
         self.forecast_model = forecast_model
         self.name = name
@@ -52,6 +65,61 @@ class ForecastFramework:
         Fits the model with dataframe.
         """
         self.forecast_model.fit(self.train_set)
+
+    def cross_validate(self,
+                       params: Dict[str, Any],
+                       K: int = 20,
+                       test_size: int = 48*5,
+                       metric_funcs={
+                           'MAE': mean_absolute_error,
+                           'MSE': mean_squared_error,
+                           'MAPE': mean_absolute_percentage_error
+                       }):
+        """
+        Evaluates model using cross-validation.
+        """
+
+        results = dict(keys=metric_funcs.keys())
+
+        for metric in metric_funcs.keys():
+            results[metric] = 0
+
+        tss = TimeSeriesSplit(n_splits=K, test_size=test_size, gap=0)
+
+        idx = 0
+
+        for train_idx, test_idx in tss.split(self.df):
+            print(f"{idx + 1}-fold:")
+            idx += 1
+            train_set = self.df.iloc[train_idx]
+            test_set = self.df.iloc[test_idx]
+
+            self.forecast_model.fit(df=train_set, params=params)
+
+            forecast_values = self.forecast_model.predict(test_set.index).to_numpy().reshape(-1)
+            true_values = test_set[self.target_columns].to_numpy()
+
+            # plot
+            fig, ax = plt.subplots(nrows=1, figsize=(12, 8))
+            ax.xaxis.set_major_locator(MinuteLocator(interval=30))
+            ax.xaxis.set_major_formatter(DateFormatter('%H:%M'))
+            ax.plot(test_set.index, true_values, label='true')
+            ax.plot(test_set.index, forecast_values, linestyle='--', label='forecast')
+
+            ax.grid()
+            fig.legend()
+            fig.savefig(f"cross_val_forecasts/forecast_{idx}.png")
+
+            for metric, func in metric_funcs.items():
+                results[metric] += func(true_values, forecast_values)
+
+            print(results)
+
+        # Average results over `K` folds
+        for metric in metric_funcs.keys():
+            results[metric] /= K
+
+        return results
 
     def evaluate(self,
                  metric_funcs={
@@ -71,6 +139,42 @@ class ForecastFramework:
             results[metric] = func(true_values, forecast_values)
         return results
 
+    def forecast_certainty_measure_(self,
+                                    y_true: np.array,
+                                    y_pred: np.array,
+                                    ):
+        pass
+
+    def error_threshold_range(self, threshold: float = 1e-3):
+        """
+        Returns the range of forecasted data having
+        percentage error with test set lower than threshold.
+
+        Parameters:
+            threshold (float): value in the range (0, 1) to provide an upper bound
+            for acceptable errors.
+
+        Returns:
+            pd.DatetimeIndex: the date range satisfying threshold error.
+        """
+        if (self.test_set is None):
+            raise ValueError("No test set were provided")
+        forecast_values = self.forecast_model.predict(self.test_set.index).to_numpy().reshape(-1)
+        true_values = self.test_set[self.target_columns].to_numpy().reshape(-1)
+
+        errors = np.abs(true_values - forecast_values) / true_values
+
+        errors_indexed = pd.Series(errors.ravel(), index=self.test_set.index)
+
+        last_index = errors_indexed[errors_indexed >= threshold].index[0]
+
+        # Check for increasing error
+        acceptable_errors = errors_indexed.loc[:last_index]
+        if not (acceptable_errors.iloc[1:].to_numpy() >= acceptable_errors.iloc[:-1].to_numpy()).all():
+            print("[!!!] Warning: errors in the acceptable range are not ascending")
+
+        return acceptable_errors.index
+
     def plot_forecast(self):
         """
         Plots forecasted data on the test interval as well as the true values.
@@ -83,11 +187,14 @@ class ForecastFramework:
         fig, ax = plt.subplots(nrows=true_values.shape[1], figsize=(12, 8), squeeze=False)
 
         for target_idx in range(true_values.shape[1]):
-            ax[target_idx, 0].plot(self.test_set.index, true_values)
-            ax[target_idx, 0].plot(self.test_set.index, forecast_values, linestyle='--')
-            ax[target_idx, 0].xaxis.set_major_locator(DayLocator(interval=1))
-            ax[target_idx, 0].xaxis.set_major_formatter(DateFormatter('%b, %d'))
+            ax[target_idx, 0].plot(self.test_set.index, true_values, label='true')
+            ax[target_idx, 0].plot(self.test_set.index, forecast_values, linestyle='--', label='forecast')
+            ax[target_idx, 0].xaxis.set_major_locator(HourLocator(interval=8))
+            ax[target_idx, 0].xaxis.set_major_formatter(DateFormatter('%m-%d, %H'))
             ax[target_idx, 0].set_ylabel(self.target_columns[target_idx])
+            ax[target_idx, 0].grid()
+        fig.autofmt_xdate(rotation=45)
+        fig.legend()
         return fig
 
     def dump_model(self, path: str = None) -> None:
@@ -109,7 +216,7 @@ class ForecastFramework:
         target_columns=['Close'],
         forecast_model: ForecastModel = ClosePriceFM(),
         name="baseline_model",
-        train_size=1.0
+        test_size=0
     ):
         """
         (Constructor)
@@ -121,13 +228,13 @@ class ForecastFramework:
             target_columns (List[str]): list of columns predicted.
             forecast_model (ForecastModel): model forecasting target.
             name (str): name of the model.
-            train_size (float): ratio of train set size.
+            test_size (int): number of last half-hours dedicated for testing.
 
         Returns:
             ForecastFramework: constructed framework object.
         """
         assert os.path.exists(path)
-        framework = ForecastFramework(data_loader, target_columns, forecast_model, name, train_size)
+        framework = ForecastFramework(data_loader, target_columns, forecast_model, name, test_size)
         framework.forecast_model.load(framework.train_set, path)
         return framework
 

@@ -69,7 +69,7 @@ class ForecastModel(ABC):
                          df: pd.DataFrame,
                          params: Dict[str, Any],
                          K: int = 20,
-                         test_size: int = 24*10*1,
+                         test_size: int = 48*5*1,
                          metric: Callable = mean_squared_error) -> float:
         """
         K-fold cross validation of a given test size to evaluate model performance.
@@ -151,7 +151,7 @@ class SLFM(ForecastModel):
     def cross_validation(self,
                          df: pd.DataFrame,
                          params: Dict[str, Any],
-                         K: int = 20, test_size: int = 24*10*1,
+                         K: int = 20, test_size: int = 48*5*1,
                          metric: Callable = mean_squared_error) -> float:
         return None
 
@@ -374,11 +374,11 @@ class XGBoostFM(ForecastModel):
                          df: pd.DataFrame,
                          params: Dict[str, Any],
                          K: int = 20,
-                         test_size: int = 24*10*1,
+                         test_size: int = 48*5*1,
                          metric: Callable = mean_squared_error) -> float:
         history_df = self.build(df)
 
-        tss = TimeSeriesSplit(n_splits=K, test_size=test_size, gap=24)
+        tss = TimeSeriesSplit(n_splits=K, test_size=test_size, gap=0)
 
         X_train, y_train = decompose_tabular_data(history_df.to_numpy(), h=self.lag)
         Xy = pd.DataFrame(X_train, y_train)
@@ -568,11 +568,11 @@ class ClosePriceFM(ForecastModel):
                          df: pd.DataFrame,
                          params: Dict[str, Any],
                          K: int = 20,
-                         test_size: int = 24*10*1,
+                         test_size: int = 48*5*1,
                          metric: Callable = mean_squared_error) -> float:
         history_df = self.build(df)
 
-        tss = TimeSeriesSplit(n_splits=K, test_size=test_size, gap=24)
+        tss = TimeSeriesSplit(n_splits=K, test_size=test_size, gap=0)
 
         X_train, y_train = decompose_tabular_data(history_df.to_numpy(), h=self.lag)
         Xy = pd.DataFrame(X_train, y_train)
@@ -854,11 +854,11 @@ class LSTMCloseFM(ForecastModel):
     def cross_validation(self,
                          df: pd.DataFrame,
                          params: Dict[str, Any],
-                         K: int = 20, test_size: int = 24*10*1,
+                         K: int = 20, test_size: int = 48*5*1,
                          metric: Callable = mean_squared_error) -> float:
         history_df = self.build(df).copy()
 
-        tss = TimeSeriesSplit(n_splits=K, test_size=test_size, gap=24)
+        tss = TimeSeriesSplit(n_splits=K, test_size=test_size, gap=0)
 
         X, y = self._prepare_data(history_df, lag=params['lag'])
 
@@ -973,6 +973,7 @@ class LSTMCloseFM(ForecastModel):
         with open(f"{path}/params.config", "r") as f:
             self.params = json.loads(f.read())
 
+
 class ClosePriceFM_Silver(ForecastModel):
     """
     Forecasting model for `Close` target.
@@ -999,7 +1000,7 @@ class ClosePriceFM_Silver(ForecastModel):
     def __init__(
             self,
             lag: int = 50,
-            train_size: float = 0.7,
+            train_size: float = 1.0,
             feature_models: Dict[str, ForecastModel] = {
                 'High': XGBoostFM('High', stationary=False),
                 'Low': XGBoostFM('Low', stationary=False),
@@ -1017,10 +1018,10 @@ class ClosePriceFM_Silver(ForecastModel):
         # First difference to remove trend
         self.last_close_price = df['Close'].iloc[-1]
         df.loc[:, 'Close'] = df['Close'].diff()
-        
+
         if 'SP500' in df.columns:
             df['SP500'] = pd.to_numeric(df['SP500'], errors='coerce').interpolate(method='time')
-            
+
         df = df.dropna()
 
         return df
@@ -1063,11 +1064,11 @@ class ClosePriceFM_Silver(ForecastModel):
                          df: pd.DataFrame,
                          params: Dict[str, Any],
                          K: int = 20,
-                         test_size: int = 24*10*1,
+                         test_size: int = 48*5*1,
                          metric: Callable = mean_squared_error) -> float:
         history_df = self.build(df)
 
-        tss = TimeSeriesSplit(n_splits=K, test_size=test_size, gap=24)
+        tss = TimeSeriesSplit(n_splits=K, test_size=test_size, gap=0)
 
         X_train, y_train = decompose_tabular_data(history_df.to_numpy(), h=self.lag)
         Xy = pd.DataFrame(X_train, y_train)
@@ -1147,7 +1148,7 @@ class ClosePriceFM_Silver(ForecastModel):
 
         return self
 
-    def predict(self, date_range: pd.DatetimeIndex, initial_price: float = None) -> pd.Series:
+    def predict(self, date_range: pd.DatetimeIndex) -> pd.Series:
 
         prediction_df = self.build_forecast_data(pd.DataFrame(index=date_range))
 
@@ -1191,8 +1192,8 @@ class ClosePriceFM_Silver(ForecastModel):
 
         # Recover original time series
         y_pred = history_df.loc[date_range[0]:date_range[-1], 'Close']
-        price_prediction = (initial_price if initial_price is not None else self.last_close_price) + np.cumsum(y_pred)
-        
+        price_prediction = self.last_close_price + np.cumsum(y_pred)
+
         return price_prediction
 
     def dump(self, path: str) -> None:

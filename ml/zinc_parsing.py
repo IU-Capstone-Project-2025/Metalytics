@@ -1,4 +1,6 @@
 
+from typing import Optional
+
 import logging
 from pathlib import Path
 import yfinance as yf
@@ -6,24 +8,26 @@ import pandas as pd
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(message)s")
 
-TICKER   = "ZNC=F"
-OUTFILE  = Path("zinc_ohlcv_safe.csv")
+TICKER   = "ZINC.L"
+OUTFILE  = Path(__file__).parent / "zinc_ohlcv_safe.csv"
 
-def fetch_ohlc(tkr: str, interval: str) -> pd.DataFrame:
+def fetch_ohlc(tkr: str, interval: str) -> Optional[pd.DataFrame]:
     """Запрашивает свечи указанного интервала через yfinance."""
-    period = "730d" if interval != "1d" else "max"   
+    # For intraday data, yfinance can be restrictive about the period.
+    # The maximum lookback period for hourly data is 730 days.
+    period = "729d" if interval == "1h" else "max"
     return yf.download(tkr, interval=interval,
                        period=period,
                        progress=False, auto_adjust=False)
 
 def main() -> None:
    
-    df = fetch_ohlc(TICKER, "60m")
-    if df.empty:
+    df = fetch_ohlc(TICKER, "1h")
+    if df is None or df.empty:
         logging.warning("Почасовых данных нет – берём дневные ('1d').")
         df = fetch_ohlc(TICKER, "1d")
 
-    if df.empty:
+    if df is None or df.empty:
         logging.error("Не удалось получить даже дневные данные для %s.", TICKER)
         return
 

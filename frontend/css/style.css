@@ -286,11 +286,17 @@ span {
 
 .news__info {
 	width: 94%;
+	height: 70%;
 	text-align: center;
 	font-size: 24px;
 	line-height: 120%;
 	letter-spacing: 1px;
 	color: var(--white);
+	overflow-y: scroll;
+}
+
+.news__info::-webkit-scrollbar {
+    display: none;
 }
 
 .news__date {
@@ -303,6 +309,10 @@ span {
 	color: var(--white);
 	bottom: 66px;
 	right: -21px;
+}
+
+.swiper-slide>div {
+	height: inherit;
 }
 
 /* Graph */
